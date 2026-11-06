@@ -177,6 +177,9 @@ class HttpReadAloudService : BaseReadAloudService(),
     override fun play() {
         pageChanged = false
         diagPlayAtNanos = System.nanoTime()
+        // 换段/换章时先关掉上一段的字级上报: 否则它会带着旧段的偏移量继续上报,
+        // 而控制器此时已经推进到新段起点, 合成出来的位置就落到别的段落 (高亮闪动)
+        playIndexJob?.cancel()
         exoPlayer.stop()
         if (!requestFocus()) return
         if (currentPlaybackText.isEmpty()) {
@@ -493,25 +496,27 @@ class HttpReadAloudService : BaseReadAloudService(),
                 "TtsDiag 段就绪 token=$rampToken idx=${playback.nowSpeak} base=${playback.readAloudNumber} " +
                     "段长=$speakTextLength 起点=$start 时长=${exoPlayer.duration} 命中缓存=$diagCacheHit " +
                     "换段耗时=${(System.nanoTime() - diagPlayAtNanos) / 1_000_000}ms " +
-                    "上轮残留上报=$diagStaleEmits(最大偏移=$diagStaleMaxOffset)",
+                    "上轮拦截数=$diagStaleEmits(最大偏移=$diagStaleMaxOffset)",
                 tag = "TtsDiag"
             )
             diagStaleEmits = 0
             diagStaleMaxOffset = 0
             for (i in start..speakTextLength.toLong()) {
-                // TtsDiag: 发射令牌与当前令牌不一致 = 这段偏移属于已经作废的上一轮,
-                // 而控制器会拿它加上"新一轮"的段起点合成位置 (这就是跨段错位的来源)
+                // 令牌已被换段/换章替换: i 属于上一段, 不能再用 (哪怕用一个字也算新段的位置)
                 if (rampToken != currentPlaybackToken) {
                     diagStaleEmits++
                     if (i > diagStaleMaxOffset) diagStaleMaxOffset = i.toInt()
+                    // TtsDiag: 修好后这里应当永不出现 (定位完成后删除)
                     AppLog.put(
-                        "TtsDiag 过期上报 发射token=$rampToken 当前token=$currentPlaybackToken " +
-                            "i=$i 控制器段起点=${readAloudController.playbackQueue.snapshot.readAloudNumber}",
+                        "TtsDiag 拦截过期上报 发射token=$rampToken 当前token=$currentPlaybackToken i=$i",
                         tag = "TtsDiag"
                     )
+                    return@launch
                 }
-                // 播放器无字级回调, 按已播时长折算段内偏移; 位置合成与发布只在共享层做一份
-                readAloudController.reportEngineRangeStart(currentPlaybackToken, i.toInt())
+                // 播放器无字级回调, 按已播时长折算段内偏移; 位置合成与发布只在共享层做一份。
+                // 必须传本轮自己的令牌: 传 currentPlaybackToken 会在"校验通过后又换轮"时
+                // 让旧段的偏移命中新轮次的令牌校验, 把位置拼错
+                readAloudController.reportEngineRangeStart(rampToken, i.toInt())
                 delay(sleep)
             }
         }
