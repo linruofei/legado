@@ -85,6 +85,10 @@
     <string name="read_aloud_by_page_summary">Turning pages in time, with a pause when the page is turned</string>
     <string name="stream_read_aloud_audio">Stream audio playback</string>
     <string name="stream_read_aloud_audio_summary">Play while downloading, may stutter when network is poor, only valid for TTS sources</string>
+    <string name="tts_prefetch_count">Pre-download segments</string>
+    <string name="tts_prefetch_count_summary">Download the audio of the next few segments (and the beginning of the next chapter) ahead of time; 0 disables it</string>
+    <string name="tts_prefetch_off">Off</string>
+    <string name="tts_prefetch_segments">%1$d segments</string>
     <string name="speak_engine">Speak Engine</string>
     <string name="sys_tts_config">System tts Settings</string>
     <string name="sys_tts_config_summary">Open the system tts settings interface</string>

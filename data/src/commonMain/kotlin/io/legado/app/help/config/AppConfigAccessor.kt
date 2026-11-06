@@ -300,6 +300,9 @@ object AppConfigRanges {
     val bottomBarIconSize = 18..36
     val bottomBarLabelMode = 0..3
 
+    /** 在线 TTS 预取段数可选区间, 0 = 关闭 (档位见朗读设置里的 listPreference)。 */
+    val httpTtsPrefetchCount = 0..10
+
     /**
      * 启动图时长的可选区间 (供设置界面 NumberPickerDialog 用)。
      * 注意: 本项不参与读取钳制 —— 各端 Accessor 与闪屏均直取存储值, 存什么用什么。

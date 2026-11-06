@@ -2,7 +2,9 @@ package io.legado.app.ui.book.read.config
 
 import androidx.compose.runtime.Composable
 import io.legado.app.constant.PreferKey
+import io.legado.app.help.config.AppConfigConstants
 import io.legado.app.ui.compose.preference.PreferenceScreen
+import io.legado.app.ui.compose.preference.listPreference
 import io.legado.app.ui.compose.preference.preference
 import io.legado.app.ui.compose.preference.switchPreference
 import io.legado.app.ui.compose.theme.AppTheme
@@ -20,6 +22,10 @@ import legado.ui.generated.resources.stream_read_aloud_audio
 import legado.ui.generated.resources.stream_read_aloud_audio_summary
 import legado.ui.generated.resources.sys_tts_config
 import legado.ui.generated.resources.sys_tts_config_summary
+import legado.ui.generated.resources.tts_prefetch_count
+import legado.ui.generated.resources.tts_prefetch_count_summary
+import legado.ui.generated.resources.tts_prefetch_off
+import legado.ui.generated.resources.tts_prefetch_segments
 import org.jetbrains.compose.resources.stringResource
 
 /**
@@ -53,6 +59,19 @@ fun ReadAloudConfigScreen(
     val summaryReadAloudByPage = stringResource(Res.string.read_aloud_by_page_summary)
     val titleStreamReadAloud = stringResource(Res.string.stream_read_aloud_audio)
     val summaryStreamReadAloud = stringResource(Res.string.stream_read_aloud_audio_summary)
+    val titlePrefetchCount = stringResource(Res.string.tts_prefetch_count)
+    val summaryPrefetchCount = stringResource(Res.string.tts_prefetch_count_summary)
+    // 档位与 PreferKey.httpTtsPrefetchCount 的存储值一一对应 (存字符串, 读取端解析后钳制)
+    val prefetchEntries = listOf(
+        stringResource(Res.string.tts_prefetch_off),
+        stringResource(Res.string.tts_prefetch_segments, 1),
+        stringResource(Res.string.tts_prefetch_segments, 2),
+        stringResource(Res.string.tts_prefetch_segments, 3),
+        stringResource(Res.string.tts_prefetch_segments, 5),
+        stringResource(Res.string.tts_prefetch_segments, 8),
+        stringResource(Res.string.tts_prefetch_segments, 10),
+    )
+    val prefetchValues = listOf("0", "1", "2", "3", "5", "8", "10")
     val titleSpeakEngine = stringResource(Res.string.speak_engine)
     val titleSysTtsConfig = stringResource(Res.string.sys_tts_config)
     val summarySysTtsConfig = stringResource(Res.string.sys_tts_config_summary)
@@ -92,6 +111,15 @@ fun ReadAloudConfigScreen(
                 title = titleStreamReadAloud,
                 summary = summaryStreamReadAloud,
                 defaultValue = false,
+            )
+            // 非流式在线朗读的预取段数: 0 = 关闭
+            listPreference(
+                prefKey = PreferKey.httpTtsPrefetchCount,
+                title = titlePrefetchCount,
+                entries = prefetchEntries,
+                values = prefetchValues,
+                defaultValue = AppConfigConstants.httpTtsPrefetchCountDefault.toString(),
+                summary = summaryPrefetchCount,
             )
             preference(
                 title = titleSpeakEngine,

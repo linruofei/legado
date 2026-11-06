@@ -85,6 +85,10 @@
     <string name="read_aloud_by_page_summary">及时翻页，翻页时会停顿一下</string>
     <string name="stream_read_aloud_audio">流式播放音频</string>
     <string name="stream_read_aloud_audio_summary">即边下边播，网络不好时播放会断断续续，仅TTS源有效</string>
+    <string name="tts_prefetch_count">预下载段数</string>
+    <string name="tts_prefetch_count_summary">提前下载当前段之后若干段以及下一章开头的音频，减少换段等待</string>
+    <string name="tts_prefetch_off">关闭</string>
+    <string name="tts_prefetch_segments">%1$d 段</string>
     <string name="speak_engine">朗读引擎</string>
     <string name="sys_tts_config">系统 TTS 设置</string>
     <string name="sys_tts_config_summary">打开系统 TTS 设置界面</string>

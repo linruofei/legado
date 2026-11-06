@@ -179,6 +179,15 @@ object PreferKey {
     const val recordHeapDump = "recordHeapDump"
     const val updateToVariant = "updateToVariant"
     const val streamReadAloudAudio = "streamReadAloudAudio"
+
+    /**
+     * 在线 TTS 预取段数: 当前段之后预取几段 (本章顺延 + 下一章前 N 段), "0" = 关闭。
+     *
+     * 存字符串 (listPreference 只 putString), 读取端按 [io.legado.app.help.config.AppConfigConstants.httpTtsPrefetchCountDefault]
+     * 兜底并钳制到 [io.legado.app.help.config.AppConfigRanges.httpTtsPrefetchCount]。
+     */
+    const val httpTtsPrefetchCount = "httpTtsPrefetchCount"
+
     const val pauseReadAloudWhilePhoneCalls = "pauseReadAloudWhilePhoneCalls"
     const val readAloudByMediaButton = "readAloudByMediaButton"
     const val devFeat = "devFeat"

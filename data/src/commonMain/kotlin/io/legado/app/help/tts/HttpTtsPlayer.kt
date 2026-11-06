@@ -16,6 +16,7 @@ import io.legado.app.utils.MD5Utils
 import io.legado.app.utils.isAtomicWriteTempName
 import io.legado.app.utils.isOrphanAtomicWriteTemp
 import io.legado.app.utils.isRetryableNetworkError
+import io.legado.app.utils.readAllAndClose
 import kotlin.coroutines.CoroutineContext
 import kotlinx.coroutines.CancellationException
 import kotlinx.coroutines.CoroutineScope
@@ -200,6 +201,14 @@ class HttpTtsDownloadScheduler(
 
     private val downloadErrorBreaker = HttpTtsRequest.DownloadErrorBreaker()
 
+    /**
+     * 预取专用熔断器。
+     *
+     * 预取是"抢时间"的旁路: 它失败时用户正在听的那一段其实还正常,若共用 [downloadErrorBreaker],
+     * 预取连错 5 次就会把主链路熔断、直接暂停朗读。独立计数后预取坏掉只影响预取自己。
+     */
+    private val prefetchErrorBreaker = HttpTtsRequest.DownloadErrorBreaker()
+
     /** 当前语速（由调用方更新,影响文件名 hash）。 */
     var speechRate: Int = 0
 
@@ -277,11 +286,13 @@ class HttpTtsDownloadScheduler(
      * @param httpTts TTS 源配置
      * @param speakText 朗读文本（已过滤不可读字符）
      * @param coroutineContext 当前协程上下文（传入避免 commonMain 调 currentCoroutineContext）
+     * @param breaker 错误计数用熔断器,预取传 [prefetchErrorBreaker] 以隔离主链路
      */
     suspend fun getSpeakStream(
         httpTts: HttpTTS,
         speakText: String,
         coroutineContext: CoroutineContext,
+        breaker: HttpTtsRequest.DownloadErrorBreaker = downloadErrorBreaker,
     ): InputStream? {
         while (true) {
             try {
@@ -289,7 +300,7 @@ class HttpTtsDownloadScheduler(
                     httpTts, speakText, speechRate, coroutineContext, analyzeUrlFactory,
                 )
                 response.body.byteStream().let { stream ->
-                    downloadErrorBreaker.reset()
+                    breaker.reset()
                     return stream
                 }
             } catch (e: Exception) {
@@ -301,13 +312,13 @@ class HttpTtsDownloadScheduler(
                         throw e
                     }
                     isRetryableNetworkError(e) -> {
-                        if (downloadErrorBreaker.record()) {
+                        if (breaker.record()) {
                             AppLog.put("tts超时或连接错误超过5次\n${e.message}", e, true)
                             throw e
                         }
                     }
                     else -> {
-                        val exceeded = downloadErrorBreaker.record()
+                        val exceeded = breaker.record()
                         AppLog.put("tts下载错误\n${e.message}", e)
                         e.printStackTraceOnDebug()
                         if (exceeded) {
@@ -326,6 +337,53 @@ class HttpTtsDownloadScheduler(
 
     /** 重置下载错误熔断器。 */
     fun resetErrorBreaker() = downloadErrorBreaker.reset()
+
+    /**
+     * 拉取一段文本的音频字节（纯内存,不落盘）。
+     *
+     * 与 [getSpeakStream] 同源: HTTP 状态码 / 登录校验 / Content-Type 判定 / 重试与熔断全部复用,
+     * 区别只在于把响应体整份读进内存,而不是写成缓存文件。
+     *
+     * @param isPrefetch 预取调用传 true,失败只计 [prefetchErrorBreaker],不影响正在播放的主链路
+     * @return 音频字节; null 表示下载出错但未超阈值,调用方用无声音频代替
+     */
+    suspend fun fetchSpeakBytes(
+        httpTts: HttpTTS,
+        speakText: String,
+        coroutineContext: CoroutineContext,
+        isPrefetch: Boolean = false,
+    ): ByteArray? {
+        val breaker = if (isPrefetch) prefetchErrorBreaker else downloadErrorBreaker
+        val inputStream = getSpeakStream(httpTts, speakText, coroutineContext, breaker) ?: return null
+        return inputStream.readAllAndClose()
+    }
+
+    /** 无声音频占位字节（内容全零的短 mp3,各端一致）。 */
+    fun silentSoundBytes(): ByteArray = cacheDirProvider.silentSoundBytes()
+
+    /**
+     * 取一段**正文**的音频字节, 空文本与下载失败都退化为无声音频。
+     *
+     * 文件名 hash 用未过滤的原文 (调用方自行算), 这里只负责把不可朗读的字符滤掉再请求:
+     * 与 [downloadAndPlayAudios] 的口径保持一致, 否则同一段会算出两个不同的文件名。
+     */
+    suspend fun fetchSpeakBytesOrSilent(
+        httpTts: HttpTTS,
+        text: String,
+        coroutineContext: CoroutineContext,
+        isPrefetch: Boolean = false,
+    ): ByteArray {
+        val speakText = text.replace(AppPattern.notReadAloudRegex, "")
+        if (speakText.isEmpty()) {
+            AppLog.put("阅读段落内容为空，使用无声音频代替。\n朗读文本：$text")
+            return silentSoundBytes()
+        }
+        return fetchSpeakBytes(httpTts, speakText, coroutineContext, isPrefetch)
+            ?: silentSoundBytes()
+    }
+
+    /** 清空预取熔断计数,切章/换源时调用,让新章节的预取重新有机会。 */
+    fun resetPrefetchErrorBreaker() = prefetchErrorBreaker.reset()
 
     // endregion
 

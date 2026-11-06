@@ -21,4 +21,7 @@ object AppConfigConstants {
     const val BOTTOM_BAR_ICON_DEFAULT = 24
     const val BOTTOM_BAR_LABEL_DEFAULT = 0
     const val defaultSpeechRate = 5
+
+    /** 在线 TTS 预取段数默认值 (0 = 关闭)。存字符串, 读取端自行解析。 */
+    const val httpTtsPrefetchCountDefault = 5
 }

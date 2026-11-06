@@ -783,6 +783,10 @@
     <string name="beta_releaseA_version">Phiên bản song song</string>
     <string name="stream_read_aloud_audio">Phát âm thanh trực tuyến</string>
     <string name="stream_read_aloud_audio_summary">Tức là vừa tải vừa phát, khi mạng kém thì phát sẽ bị gián đoạn, chỉ có nguồn TTS mới có hiệu lực</string>
+    <string name="tts_prefetch_count">Số đoạn tải trước</string>
+    <string name="tts_prefetch_count_summary">Tải trước âm thanh của vài đoạn tiếp theo (và phần đầu chương sau), giảm thời gian chờ khi chuyển đoạn</string>
+    <string name="tts_prefetch_off">Tắt</string>
+    <string name="tts_prefetch_segments">%1$d đoạn</string>
     <string name="pause_read_aloud_while_phone_calls_title">Tạm dừng đọc trong khi gọi điện</string>
     <string name="pause_read_aloud_while_phone_calls_summary">Tạm dừng đọc trong khi gọi điện, cần quyền đọc trạng thái điện thoại</string>
     <string name="read_aloud_read_phone_state_permission_rationale">Đọc cần đọc trạng thái điện thoại để thực hiện chức năng tạm dừng đọc trong khi gọi</string>
