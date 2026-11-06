@@ -1,0 +1,71 @@
+name: Debug APK
+
+# 唯一的 CI 工作流: 只构建 debug 变体并上传 artifact。
+# 不签名 (debug 变体走 AGP 自动生成的 debug keystore), 因此不需要任何 secret,
+# fork 或个人分支直接可用。
+# 原 Test Build / Release Build / iOS / Web / Desktop 等流程已整体停用,
+# 文件移到 .github/workflows-disabled/, 恢复方式见该目录 README.md。
+
+on:
+  push:
+    branches:
+      - '**'
+    paths-ignore:
+      - '**.md'
+      - '**/assets/**'
+      - '**/ISSUE_TEMPLATE/**'
+      - '**/modules/web/**'
+  pull_request:
+    paths-ignore:
+      - '**.md'
+      - '**/assets/**'
+      - '**/ISSUE_TEMPLATE/**'
+      - '**/modules/web/**'
+  workflow_dispatch:
+
+concurrency:
+  group: ${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
+
+permissions:
+  contents: read
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    env:
+      product: app
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v5
+        with:
+          # versionCode 依赖 git rev-list --count HEAD, 需要完整历史
+          fetch-depth: 0
+
+      - name: Set up JDK 21
+        uses: actions/setup-java@v5
+        with:
+          distribution: 'temurin'
+          java-version: 21
+
+      - name: Set up Gradle
+        uses: gradle/actions/setup-gradle@v5
+
+      - name: Build Debug
+        run: |
+          echo "开始 ${{ env.product }} debug 构建"
+          chmod +x gradlew
+          ./gradlew assemble${{ env.product }}Debug --build-cache --parallel --warning-mode all
+          mkdir -p apk/
+          # 产物被 build.gradle.kts 的 CopyRenamedApks 拷到 renamed-apks/<variant>/
+          find app/build/outputs/renamed-apks -name "*.apk" -exec cp {} apk/ \;
+          echo "--- 产物 ---"
+          ls -lh apk/
+
+      - name: Upload APK
+        uses: actions/upload-artifact@v6
+        with:
+          name: app-debug.apk
+          path: apk/*.apk
+          if-no-files-found: error
+          retention-days: 14
