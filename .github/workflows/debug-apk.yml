@@ -55,7 +55,9 @@ jobs:
         run: |
           echo "开始 ${{ env.product }} debug 构建"
           chmod +x gradlew
-          ./gradlew assemble${{ env.product }}Debug --build-cache --parallel --warning-mode all
+          # 只出一个 ABI (arm64): 少打一个 ABI + universal, 产物从 ~93MB 降到 ~30MB。
+          # 注意这省的是打包/上传环节, 编译耗时不受影响。
+          ./gradlew assemble${{ env.product }}Debug -PonlyAbi=arm64-v8a --build-cache --parallel --warning-mode all
           mkdir -p apk/
           # 产物被 build.gradle.kts 的 CopyRenamedApks 拷到 renamed-apks/<variant>/
           find app/build/outputs/renamed-apks -name "*.apk" -exec cp {} apk/ \;

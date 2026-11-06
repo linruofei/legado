@@ -65,9 +65,19 @@ class ReadAloudChapterCoordinator(
         val chapterIndex = controller.chapterIndex.value
         val position = ports.currentPosition ?: return
         if (position.chapterIndex != chapterIndex) return
+        // TtsDiag: 字级进度正常情况下每次只前进 1~2 个字; 前跳过多或倒退
+        // 就是合成出了错位的位置 (定位完成后删除)
+        val prev = diagLastPublished
+        if (prev >= 0 && (pos - prev > 8 || pos < prev - 1)) {
+            AppLog.put("TtsDiag 位置跳变 prev=$prev pos=$pos 差=${pos - prev}", tag = "TtsDiag")
+        }
+        diagLastPublished = pos
         ports.advanceReadAloudPage(chapterIndex, pos)
         ports.positionPublisher.publishPosition(pos)
     }
+
+    // TtsDiag: 上一次发布到 UI 的位置, 仅用于上面的跳变检测 (定位完成后删除)
+    private var diagLastPublished = -1
 
     /** 起监听: 装载答复与章节排版更新合并看。可重复调用, 已在跑时不会重建。 */
     suspend fun startWatch() {

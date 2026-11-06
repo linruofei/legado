@@ -860,7 +860,19 @@ class ReadAloudControllerShared(
      */
     fun reportEngineRangeStart(playbackToken: Long, rangeStart: Int) {
         if (playbackToken != playbackRound.value.token) return
-        _speakPosition.value = _chapterPosition.value + rangeStart.coerceAtLeast(0)
+        val base = _chapterPosition.value
+        val pos = base + rangeStart.coerceAtLeast(0)
+        // TtsDiag: offset 超出"当前段"长度 = 它是按上一段的长度算出来的, 却被加到了
+        // 新一轮的段起点上 (定位完成后删除)
+        val curLength = playbackQueue.snapshot.currentParagraph()?.length ?: 0
+        if (curLength > 0 && rangeStart > curLength) {
+            AppLog.put(
+                "TtsDiag 段内偏移越界 token=$playbackToken offset=$rangeStart " +
+                    "当前段长=$curLength base=$base 合成位置=$pos",
+                tag = "TtsDiag"
+            )
+        }
+        _speakPosition.value = pos
     }
 
     private fun onParagraphDone(token: Long) {

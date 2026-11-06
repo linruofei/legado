@@ -140,6 +140,17 @@ class HttpReadAloudService : BaseReadAloudService(),
     private val downloadTaskActiveLock = Mutex()
     private val loadingState = MutableStateFlow(false)
 
+    // region TtsDiag: 定位"换段时朗读高亮闪到别的段落" (定位完成后整块删除)
+    /** 本段 play() 发起时刻, 用于统计"段末 → 新媒体项就绪"的窗口长度 (ns)。 */
+    private var diagPlayAtNanos = 0L
+    /** 本段字节是否命中内存缓存。 */
+    private var diagCacheHit = false
+    /** 上一段 ramp 在新令牌生效后仍继续上报的次数 (跨段拼位置的直接证据)。 */
+    private var diagStaleEmits = 0
+    /** 上述残留上报里最大的段内偏移。 */
+    private var diagStaleMaxOffset = 0
+    // endregion
+
     /** 在线 TTS 音频内存缓存: 播放与预取共用一份。 */
     private val memoryCache by lazy { TtsAudioMemoryCache() }
 
@@ -165,6 +176,7 @@ class HttpReadAloudService : BaseReadAloudService(),
 
     override fun play() {
         pageChanged = false
+        diagPlayAtNanos = System.nanoTime()
         exoPlayer.stop()
         if (!requestFocus()) return
         if (currentPlaybackText.isEmpty()) {
@@ -239,7 +251,11 @@ class HttpReadAloudService : BaseReadAloudService(),
         text: String,
         fileName: String,
     ): ByteArray {
-        memoryCache.get(fileName)?.let { return it }
+        memoryCache.get(fileName)?.let {
+            diagCacheHit = true
+            return it
+        }
+        diagCacheHit = false
         inFlightSegments.add(fileName)
         val bytes = try {
             downloadScheduler.fetchSpeakBytesOrSilent(httpTts, text, currentCoroutineContext())
@@ -462,6 +478,7 @@ class HttpReadAloudService : BaseReadAloudService(),
         playIndexJob = lifecycleScope.launch {
             // 一次取快照: 本协程按当前段时长逐字上报, 逐次重读队列会跨段/跨章取到混合值
             val playback = readAloudController.playbackQueue.snapshot
+            val rampToken = currentPlaybackToken
             if (exoPlayer.duration <= 0) {
                 return@launch
             }
@@ -471,7 +488,28 @@ class HttpReadAloudService : BaseReadAloudService(),
             }
             val sleep = exoPlayer.duration / speakTextLength
             val start = speakTextLength * exoPlayer.currentPosition / exoPlayer.duration
+            // TtsDiag: 每段一行, 换段窗口 + 上一轮残留上报
+            AppLog.put(
+                "TtsDiag 段就绪 token=$rampToken idx=${playback.nowSpeak} base=${playback.readAloudNumber} " +
+                    "段长=$speakTextLength 起点=$start 时长=${exoPlayer.duration} 命中缓存=$diagCacheHit " +
+                    "换段耗时=${(System.nanoTime() - diagPlayAtNanos) / 1_000_000}ms " +
+                    "上轮残留上报=$diagStaleEmits(最大偏移=$diagStaleMaxOffset)",
+                tag = "TtsDiag"
+            )
+            diagStaleEmits = 0
+            diagStaleMaxOffset = 0
             for (i in start..speakTextLength.toLong()) {
+                // TtsDiag: 发射令牌与当前令牌不一致 = 这段偏移属于已经作废的上一轮,
+                // 而控制器会拿它加上"新一轮"的段起点合成位置 (这就是跨段错位的来源)
+                if (rampToken != currentPlaybackToken) {
+                    diagStaleEmits++
+                    if (i > diagStaleMaxOffset) diagStaleMaxOffset = i.toInt()
+                    AppLog.put(
+                        "TtsDiag 过期上报 发射token=$rampToken 当前token=$currentPlaybackToken " +
+                            "i=$i 控制器段起点=${readAloudController.playbackQueue.snapshot.readAloudNumber}",
+                        tag = "TtsDiag"
+                    )
+                }
                 // 播放器无字级回调, 按已播时长折算段内偏移; 位置合成与发布只在共享层做一份
                 readAloudController.reportEngineRangeStart(currentPlaybackToken, i.toInt())
                 delay(sleep)

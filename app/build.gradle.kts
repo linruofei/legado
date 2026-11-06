@@ -66,6 +66,8 @@ val version = providers.gradleProperty("appVersion").orNull ?: "3.${releaseTime(
 // 共存构建 (CI 传 -PcoexistBuild=true): 包名后缀与 APK 文件名后缀同源,
 // 与原包名版本可同时安装, 且 releaseA 字样是应用内更新识别渠道变体的依据 (AppReleaseInfo)
 val coexistBuild = providers.gradleProperty("coexistBuild").orNull == "true"
+// CI 传 -PonlyAbi=arm64-v8a 时只出该 ABI 的包 (debug 验证构建用, 少打一个 ABI + universal)
+val onlyAbi = providers.gradleProperty("onlyAbi").orNull?.trim()?.takeIf { it.isNotEmpty() }
 val gitCommits = providers.exec {
     commandLine("git", "rev-list", "HEAD", "--count")
 }.standardOutput.asText.get().trim().toInt()
@@ -162,8 +164,15 @@ android {
             reset()
             // 只保留 arm 系 ABI (arm64-v8a + armeabi-v7a); x86/x86_64 不再出包。
             // universal 仍出, 且只含已编译 ABI
-            include("armeabi-v7a", "arm64-v8a")
-            isUniversalApk = true
+            if (onlyAbi != null) {
+                // CI 用 -PonlyAbi=arm64-v8a 只出一个 ABI 的包: 省掉另一个 ABI 和 universal
+                // 的打包与上传, 产物体积也小很多 (编译阶段不受影响)
+                include(onlyAbi)
+                isUniversalApk = false
+            } else {
+                include("armeabi-v7a", "arm64-v8a")
+                isUniversalApk = true
+            }
         }
     }
 
