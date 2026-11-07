@@ -89,6 +89,7 @@ import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.flow.combine
+import kotlinx.coroutines.flow.dropWhile
 import kotlinx.coroutines.flow.emptyFlow
 import okio.FileNotFoundException
 import kotlinx.coroutines.flow.map
@@ -703,6 +704,12 @@ class ReadBookViewModelShared(
             } else {
                 combine(readBook.durChapterIndex, readBook.positionSnapshot) { index, snapshot ->
                     ReadAloudPosition(index, snapshot.chapterPosition, snapshot.origin)
+                }.dropWhile {
+                    // 装载期的几帧是假位置: combine 订阅即发首帧 (章号 0 / 位置 0), loadBook 改章号
+                    // 后重发一帧 (位置仍是 0), loadChapter 复位位置再发一帧 —— 它们的 origin 都写着
+                    // User, 朗读侧分不出来, 暂停态会当成用户翻页而让恢复播放从章首重念。
+                    // 等目标章排版落位 (curTextChapter 的章号与 durChapterIndex 一致) 再开始广播。
+                    readBook.curTextChapter.value?.chapterIndex != readBook.durChapterIndexValue
                 }
             }
         override val chapterUpdates = readBook.curTextChapter.mapNotNull { chapter ->
