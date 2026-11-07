@@ -475,11 +475,23 @@ abstract class BaseReadAloudService : BaseService() {
     @CallSuper
     open fun resumeReadAloud() {
         AppLog.put("TtsDiag resumeReadAloud pageChanged=$pageChanged state=${readAloudController.state.value} 请求位置=$requestedChapterPosition 段区间=${currentParagraphRange()} <- ${diagCaller()}", tag = "TtsDiag")
+        val state = readAloudController.state.value
         if (pageChanged) {
             val chapterIndex = readBook?.durChapterIndexValue ?: return
             pageChanged = false
-            readAloudController.start(chapterIndex, requestedChapterPosition)
-        } else if (readAloudController.state.value == ReadAloudControllerShared.ReadAloudState.PAUSED) {
+            // 暂停期间阅读位置被挪动过: 只有真的换了章或挪出当前段才按请求位置重开,
+            // 否则接着念当前段 —— 暂停态下的重复位置发布不该让朗读从头重念
+            val queueReady = readAloudController.playbackQueue.snapshot.currentParagraph() != null
+            val resumeInPlace = state == ReadAloudControllerShared.ReadAloudState.PAUSED &&
+                queueReady &&
+                readAloudController.chapterIndex.value == chapterIndex &&
+                requestedChapterPosition in currentParagraphRange()
+            if (resumeInPlace) {
+                readAloudController.resume()
+            } else {
+                readAloudController.start(chapterIndex, requestedChapterPosition)
+            }
+        } else if (state == ReadAloudControllerShared.ReadAloudState.PAUSED) {
             readAloudController.resume()
         }
         if (readAloudController.state.value == ReadAloudControllerShared.ReadAloudState.PLAYING) {

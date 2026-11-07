@@ -142,8 +142,9 @@ object HeadlessReadAloud {
     private fun launchSession(initialBook: Book? = null, resumePlayback: Boolean = true) {
         val scope = screenModelScope("无头朗读")
         val readBook = ReadBookShared()
-        // 构造即挂朗读端口 (ReadBookViewModelShared.init), 与阅读页同一入口
-        val viewModel = ReadBookViewModelShared(readBook, scope)
+        // 构造即挂朗读端口 (ReadBookViewModelShared.init), 与阅读页同一入口。
+        // 不广播阅读位置: 后台没有页面可跟随, 装载期的初始位置帧会被朗读侧当成用户翻页
+        val viewModel = ReadBookViewModelShared(readBook, scope, broadcastPositions = false)
         val created = Session(scope, readBook, viewModel)
         synchronized(lock) { session = created }
         // 供朗读侧读"当前阅读实例": 书内 TTS 引擎设置、通知书名、Android 起播页号都读它

@@ -89,6 +89,7 @@ import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.flow.combine
+import kotlinx.coroutines.flow.emptyFlow
 import okio.FileNotFoundException
 import kotlinx.coroutines.flow.map
 import kotlinx.coroutines.flow.mapNotNull
@@ -215,6 +216,15 @@ class ReadBookViewModelShared(
     private val readBook: ReadBookShared,
     private val scope: CoroutineScope,
     layoutConfig: LayoutConfig = LayoutConfig.DEFAULT,
+    /**
+     * 是否向朗读侧广播阅读位置。
+     *
+     * 无头接管会话 ([HeadlessReadAloud]) 传 false: 后台没有页面可跟随, 而装载期
+     * `combine(durChapterIndex, positionSnapshot)` 的首帧与重发帧都是初始值 (章号 0 / 位置 0),
+     * 会被朗读侧当成用户翻页 —— 暂停态置 `pageChanged` 使恢复播放从章首重念, 播放态触发
+     * `onFollow` 重启当前段。停掉广播后这两条副作用一起消失。
+     */
+    private val broadcastPositions: Boolean = true,
 ) : ReadBookViewModelPort {
     /** 排版配置：窗口尺寸 / 阅读配置变化时由 UI 层调 [updateLayoutConfig] 推新值。 */
     private val _layoutConfig = MutableStateFlow(layoutConfig)
@@ -686,8 +696,14 @@ class ReadBookViewModelShared(
         // 章号、位置、来源三者在同一帧里读出: 翻章时位置值可能不变 (0→0), 章号变化
         // 必须自己驱动一次; 来源与位置同一次发布, 不会错配
         override val positionUpdates =
-            combine(readBook.durChapterIndex, readBook.positionSnapshot) { index, snapshot ->
-                ReadAloudPosition(index, snapshot.chapterPosition, snapshot.origin)
+            if (!broadcastPositions) {
+                // 无头接管会话不广播位置: 装载期的初始帧 (章号 0 / 位置 0) 会被朗读侧当成
+                // 用户翻页, 见构造参数说明
+                emptyFlow()
+            } else {
+                combine(readBook.durChapterIndex, readBook.positionSnapshot) { index, snapshot ->
+                    ReadAloudPosition(index, snapshot.chapterPosition, snapshot.origin)
+                }
             }
         override val chapterUpdates = readBook.curTextChapter.mapNotNull { chapter ->
             chapter ?: return@mapNotNull null
