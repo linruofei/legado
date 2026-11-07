@@ -205,6 +205,7 @@
     <string name="replace_scope">Đối tượng thay thế. Tên sách hoặc URL nguồn có sẵn</string>
     <string name="menu_action_group">Nhóm</string>
     <string name="sys_file_picker">Bộ chọn tệp hệ thống</string>
+    <string name="volume_key_page">Phím âm lượng lật trang</string>
     <string name="volume_key_page_on_play">Phím âm lượng lật trang khi đọc</string>
     <string name="allow_update">Kích hoạt cập nhật</string>
     <string name="disable_update">Vô hiệu hóa cập nhật</string>

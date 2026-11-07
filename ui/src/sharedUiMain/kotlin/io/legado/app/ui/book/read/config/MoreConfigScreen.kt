@@ -32,6 +32,7 @@ import legado.ui.generated.resources.screen_time_out_value
 import legado.ui.generated.resources.show_read_title_addition
 import legado.ui.generated.resources.text_bottom_justify
 import legado.ui.generated.resources.text_full_justify
+import legado.ui.generated.resources.volume_key_page
 import org.jetbrains.compose.resources.stringArrayResource
 import org.jetbrains.compose.resources.stringResource
 
@@ -76,6 +77,7 @@ fun MoreConfigScreen(
     val titleTextFullJustify = stringResource(Res.string.text_full_justify)
     val titleTextBottomJustify = stringResource(Res.string.text_bottom_justify)
     val titleHangFirstPunctuation = stringResource(Res.string.hang_first_punctuation)
+    val titleVolumeKeyPage = stringResource(Res.string.volume_key_page)
     val titlePageTouchSlop = stringResource(Res.string.page_touch_slop_title)
     val titleAutoChangeSource = stringResource(Res.string.auto_change_source)
     val titlePreviewImageByClick = stringResource(Res.string.preview_image_by_click)
@@ -160,7 +162,15 @@ fun MoreConfigScreen(
                 isBottomBackground = true,
                 onCheckedChange = { onPrefChange(PreferKey.hangFirstPunctuation) },
             )
-            // 音量键翻页恒生效 (2026-08 用户拍板), 无开关条目; 滚轮翻页已彻底禁用 (2026-08 用户拍板), 无开关条目
+            // 音量键翻页总开关 (默认开, 对照原版 pref_config_read.xml 的 volumeKeyPage);
+            // 滚轮翻页已彻底禁用 (2026-08 用户拍板), 无开关条目
+            switchPreference(
+                prefKey = PreferKey.volumeKeyPage,
+                title = titleVolumeKeyPage,
+                defaultValue = true,
+                isBottomBackground = true,
+                onCheckedChange = { onPrefChange(PreferKey.volumeKeyPage) },
+            )
             preference(
                 title = titlePageTouchSlop,
                 summary = pageTouchSlopSummary,

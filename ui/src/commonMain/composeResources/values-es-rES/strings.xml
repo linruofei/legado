@@ -206,6 +206,7 @@
     <string name="replace_scope">Objeto sustituto. El nombre del libro o la URL de origen están disponibles</string>
     <string name="menu_action_group">Grupos</string>
     <string name="sys_file_picker">Selector de archivos del sistema</string>
+    <string name="volume_key_page">Botones de volumen para pasar páginas</string>
     <string name="volume_key_page_on_play">Botones de volumen para pasar las páginas mientras lee</string>
     <string name="allow_update">Activar actualizaciones</string>
     <string name="disable_update">Desactivar actualizaciones</string>

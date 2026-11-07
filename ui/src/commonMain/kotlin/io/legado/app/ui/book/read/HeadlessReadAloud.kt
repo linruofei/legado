@@ -133,7 +133,13 @@ object HeadlessReadAloud {
         launchSession()
     }
 
-    private fun launchSession(initialBook: Book? = null) {
+    /**
+     * @param resumePlayback true = 装载就绪后按当前进度起播 (快捷方式/媒体键的"直接朗读");
+     *   false = 只接管数据源, 不碰播放状态 —— 阅读页退出时的接管必须传 false:
+     *   播放/暂停由朗读服务自己维持, 在这里再起一遍会把已暂停的朗读重新拉起来,
+     *   也会把正在播的段落从头重念。
+     */
+    private fun launchSession(initialBook: Book? = null, resumePlayback: Boolean = true) {
         val scope = screenModelScope("无头朗读")
         val readBook = ReadBookShared()
         // 构造即挂朗读端口 (ReadBookViewModelShared.init), 与阅读页同一入口
@@ -162,7 +168,11 @@ object HeadlessReadAloud {
                 close(created)
                 return@launch
             }
-            readBook.readAloud()
+            if (resumePlayback) {
+                readBook.readAloud()
+            } else {
+                AppLog.putDebug("无头朗读: 已接管正文, 保持当前播放状态")
+            }
         }
         scope.launch {
             // 阅读页接手 (注册表换成别的实例) 时收掉无头会话: 端口与状态都由页面提供
@@ -194,7 +204,7 @@ object HeadlessReadAloud {
         val book = source.bookValue ?: return false
         // 页面是当前注册实例: 先收掉可能存在的旧会话 (它的阅读页接管逻辑已失效), 再按页面状态重装
         synchronized(lock) { session.also { session = null } }?.let { close(it) }
-        launchSession(book)
+        launchSession(book, resumePlayback = false)
         return true
     }
 

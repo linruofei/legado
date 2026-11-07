@@ -864,7 +864,13 @@ class ReadAloudControllerShared(
     }
 
     private fun onParagraphDone(token: Long) {
-        if (_state.value != ReadAloudState.PLAYING || token != playbackRound.value.token) return
+        if (_state.value != ReadAloudState.PLAYING || token != playbackRound.value.token) {
+            AppLog.put(
+                "TtsDiag 段末推进被丢弃 state=${_state.value} token=$token round=${playbackRound.value.token}",
+                tag = "TtsDiag"
+            )
+            return
+        }
         invalidatePlayback()
         if (playbackQueue.stepNextOrEnd()) {
             // 还有段落, 朗读下一段

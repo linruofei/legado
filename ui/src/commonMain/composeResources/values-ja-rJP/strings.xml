@@ -206,6 +206,7 @@
     <string name="replace_scope">Replacement object. Book name or source url is available</string>
     <string name="menu_action_group">Groups</string>
     <string name="sys_file_picker">System file picker</string>
+    <string name="volume_key_page">音量キーでページめくり</string>
     <string name="volume_key_page_on_play">Volume keys to turn page when reading</string>
     <string name="allow_update">Enable update</string>
     <string name="disable_update">Disable update</string>

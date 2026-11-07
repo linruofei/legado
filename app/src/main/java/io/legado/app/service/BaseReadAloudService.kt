@@ -252,6 +252,7 @@ abstract class BaseReadAloudService : BaseService() {
         // (对照原版 nextChapter 里"没有下一章就 stopSelf")
         lifecycleScope.launch {
             readAloudController.state.collectLatest { state ->
+                AppLog.put("TtsDiag 控制器状态=$state pause=$pause", tag = "TtsDiag")
                 if (state == ReadAloudControllerShared.ReadAloudState.COMPLETED) stopSelf()
                 if (state == ReadAloudControllerShared.ReadAloudState.WAITING) {
                     chapterCoordinator.onWaiting()
@@ -343,6 +344,7 @@ abstract class BaseReadAloudService : BaseService() {
     }
 
     private fun startReadAloud(play: Boolean, pageIndex: Int, startPos: Int) {
+        AppLog.put("TtsDiag startReadAloud play=$play page=$pageIndex <- ${diagCaller()}", tag = "TtsDiag")
         if (chapterWatchJob?.isActive != true) armChapterWatch()
         val chapter = readBook?.curTextChapter?.value
         val chapterIndex = chapter?.chapterIndex ?: readBook?.durChapterIndexValue ?: return
@@ -436,6 +438,7 @@ abstract class BaseReadAloudService : BaseService() {
 
     @CallSuper
     open fun pauseReadAloud(abandonFocus: Boolean = true) {
+        AppLog.put("TtsDiag pauseReadAloud state=${readAloudController.state.value} <- ${diagCaller()}", tag = "TtsDiag")
         readAloudController.pause()
         playbackLock.release()
         pause = readAloudController.state.value != ReadAloudControllerShared.ReadAloudState.PLAYING
@@ -450,6 +453,7 @@ abstract class BaseReadAloudService : BaseService() {
 
     @CallSuper
     open fun resumeReadAloud() {
+        AppLog.put("TtsDiag resumeReadAloud pageChanged=$pageChanged state=${readAloudController.state.value} <- ${diagCaller()}", tag = "TtsDiag")
         if (pageChanged) {
             val chapterIndex = readBook?.durChapterIndexValue ?: return
             pageChanged = false
@@ -478,6 +482,14 @@ abstract class BaseReadAloudService : BaseService() {
     private fun prevP() = readAloudController.prevParagraph()
 
     private fun nextP() = readAloudController.nextParagraph()
+
+    /** 临时诊断: 调用栈前几帧, 用于定位是谁改了朗读播放状态 (定位完删除)。 */
+    private fun diagCaller(): String = Throwable().stackTrace
+        .drop(2)
+        .take(4)
+        .joinToString(" <- ") {
+            "${it.className.substringAfterLast('.')}.${it.methodName}:${it.lineNumber}"
+        }
 
     /**
      * 请求音频焦点。失败时暂停并 toast。

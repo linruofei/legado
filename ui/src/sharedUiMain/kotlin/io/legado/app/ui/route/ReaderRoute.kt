@@ -32,6 +32,7 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import io.legado.app.constant.AppConst
 import io.legado.app.constant.PageAnim
+import io.legado.app.constant.PreferKey
 import io.legado.app.data.AppDbProviders
 import io.legado.app.data.entities.Book
 import io.legado.app.data.entities.BookProgress
@@ -44,6 +45,7 @@ import io.legado.app.help.config.LocalConfigKeys
 import io.legado.app.help.config.LocalConfigProviders
 import io.legado.app.help.config.LocalConfigShared
 import io.legado.app.help.config.LocalReadConfigProviders
+import io.legado.app.help.config.PreferenceProviders
 import io.legado.app.help.config.ReadBookConfigProviders
 import io.legado.app.help.config.ReadBookConfigShared
 import io.legado.app.help.coroutine.IoDispatcher
@@ -567,12 +569,15 @@ fun ReaderRoute(
             }
         }
     }
-    // 音量键翻页 (对照原版 ReadBookKeyHandler VOLUME_UP/DOWN 分支; 2026-08 用户拍板:
-    // 恒生效不提供开关, 已移除 AppConfig.volumeKeyPage 配置读取, 始终拦截音量键翻页)
+    // 音量键翻页 (对照原版 ReadBookKeyHandler VOLUME_UP/DOWN 分支; 默认开, 阅读设置里可关)
+    // 开关关闭时不消费按键 → 音量键回到系统音量 (原版 AppConfig.volumeKeyPage 语义)。
     // 长按策略 (2026-08 用户拍板): 与漫画页一致——TRIGGER 连翻 + 200ms 节流,
     // 接线收敛在共享 VolumeKeyPageTurnHandler (单击翻页 / 长按连翻节流 / 抬起消费)
     VolumeKeyPageTurnHandler(
-        enabled = { isTopEntry && !menuController.state.isVisible },
+        enabled = {
+            isTopEntry && !menuController.state.isVisible &&
+                PreferenceProviders.get().getBoolean(PreferKey.volumeKeyPage, true)
+        },
         throttle = pageTurnThrottle,
     ) { volumeUp ->
         screenModel.viewModel.turnPage(

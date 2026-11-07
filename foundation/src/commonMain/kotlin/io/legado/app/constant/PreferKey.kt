@@ -188,6 +188,9 @@ object PreferKey {
      */
     const val httpTtsPrefetchCount = "httpTtsPrefetchCount"
 
+    /** 音量键翻页总开关: 关闭后音量键恢复系统音量, 小说阅读页不再拦键。 */
+    const val volumeKeyPage = "volumeKeyPage"
+
     const val pauseReadAloudWhilePhoneCalls = "pauseReadAloudWhilePhoneCalls"
     const val readAloudByMediaButton = "readAloudByMediaButton"
     const val devFeat = "devFeat"

@@ -207,6 +207,7 @@
     <string name="replace_scope">替換範圍，選填書名或者書源url</string>
     <string name="menu_action_group">分組</string>
     <string name="sys_file_picker">系統文件選擇器</string>
+    <string name="volume_key_page">音量鍵翻頁</string>
     <string name="volume_key_page_on_play">朗讀時音量鍵翻頁</string>
     <string name="allow_update">允許更新</string>
     <string name="disable_update">禁止更新</string>
