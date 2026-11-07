@@ -259,6 +259,13 @@ abstract class BaseReadAloudService : BaseService() {
                 }
             }
         }
+        // 临时诊断: 控制器置 ERROR 时只 emit 原因串, 安卓端此前没有任何订阅 (共享宿主有),
+        // 导致日志里只看得到 state=ERROR 看不到为什么 (定位完删除)
+        lifecycleScope.launch {
+            readAloudController.lastError.collect { message ->
+                AppLog.put("TtsDiag 朗读错误: $message", tag = "TtsDiag")
+            }
+        }
         sleepTimer = SleepTimer(
             scope = lifecycleScope,
             postMinute = { ActiveReadAloudHostPorts.positionPublisher.publishTimer(it) },
@@ -406,9 +413,23 @@ abstract class BaseReadAloudService : BaseService() {
                     position = position,
                     paragraphRange = ::currentParagraphRange,
                     onFollow = { follow ->
+                        AppLog.put(
+                            "TtsDiag 跟随位置 chapter=${follow.chapterIndex}" +
+                                " pos=${follow.chapterPosition} origin=${follow.origin}" +
+                                " 当前章=${readAloudController.chapterIndex.value}" +
+                                " 段区间=${currentParagraphRange()}",
+                            tag = "TtsDiag"
+                        )
                         readAloudController.seekTo(follow.chapterPosition, follow.chapterIndex)
                     },
                     onPauseMove = { moved ->
+                        AppLog.put(
+                            "TtsDiag 暂停位置移动 chapter=${moved.chapterIndex}" +
+                                " pos=${moved.chapterPosition} origin=${moved.origin}" +
+                                " 当前章=${readAloudController.chapterIndex.value}" +
+                                " 段区间=${currentParagraphRange()}",
+                            tag = "TtsDiag"
+                        )
                         requestedChapterPosition = moved.chapterPosition
                         pageChanged = true
                     },
@@ -453,7 +474,7 @@ abstract class BaseReadAloudService : BaseService() {
 
     @CallSuper
     open fun resumeReadAloud() {
-        AppLog.put("TtsDiag resumeReadAloud pageChanged=$pageChanged state=${readAloudController.state.value} <- ${diagCaller()}", tag = "TtsDiag")
+        AppLog.put("TtsDiag resumeReadAloud pageChanged=$pageChanged state=${readAloudController.state.value} 请求位置=$requestedChapterPosition 段区间=${currentParagraphRange()} <- ${diagCaller()}", tag = "TtsDiag")
         if (pageChanged) {
             val chapterIndex = readBook?.durChapterIndexValue ?: return
             pageChanged = false

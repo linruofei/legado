@@ -140,6 +140,10 @@ class ReadAloudChapterCoordinator(
         // 每次真正进入等待都重新评估: 同一章第二次等待不该被上次的信号去重挡住
         handledUpdate.value = null
         if (!ports.chapterSourceAvailable) {
+            AppLog.put(
+                "TtsDiag 上报错误(等章无活动阅读页) chapter=$chapterIndex state=${controller.state.value}",
+                tag = "TtsDiag"
+            )
             controller.reportError("朗读需要阅读页提供正文, 当前无活动阅读页")
             return
         }
@@ -170,6 +174,10 @@ class ReadAloudChapterCoordinator(
         if (update.chapterIndex != controller.chapterIndex.value) return
         if (handledUpdate.getAndSet(update) == update) return
         if (update.error != null) {
+            AppLog.put(
+                "TtsDiag 上报错误(章节更新) chapter=${update.chapterIndex} error=${update.error}",
+                tag = "TtsDiag"
+            )
             controller.reportError(update.error)
             return
         }
@@ -193,6 +201,10 @@ class ReadAloudChapterCoordinator(
                 val current = controller.chapterIndex.value
                 if (current < 0) return
                 if (current == index) {
+                    AppLog.put(
+                        "TtsDiag 上报错误(章无法朗读) chapter=$index state=${controller.state.value}",
+                        tag = "TtsDiag"
+                    )
                     controller.reportError("第 ${index + 1} 章无法朗读")
                     return
                 }
