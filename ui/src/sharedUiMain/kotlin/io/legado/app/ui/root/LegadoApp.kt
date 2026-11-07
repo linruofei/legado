@@ -579,6 +579,12 @@ fun LegadoApp(
                 } // key(entry.id)
             }
 
+            // 朗读迷你播放条: 悬浮在页面内容之上 (非阅读页且正在朗读时出现)
+            ReadAloudMiniBar(
+                navigator = navigator,
+                modifier = Modifier.align(Alignment.BottomCenter),
+            )
+
             // 渲染 Overlay 栈: 由 shared OverlayContentHost 统一分流 Dialog/Sheet
             // Overlay 栈同样按 key 固定组合身份 (pop/挂起恢复时栈序变化不丢状态)
             overlays.forEach { overlay ->

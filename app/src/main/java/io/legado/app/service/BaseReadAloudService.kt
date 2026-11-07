@@ -156,6 +156,45 @@ abstract class BaseReadAloudService : BaseService() {
     internal var textChapter: TextChapterShared? = null
 
     /**
+     * 迷你播放条端口: 把"正在朗读什么/是否在播"折叠成一个 StateFlow 给共享 UI。
+     *
+     * 复用本服务的控制入口 (pauseReadAloud/resumeReadAloud/prevChapter/nextChapter/stop),
+     * 不再给 ReadBookPlatform 加方法 —— 那样四端都得跟着实现一遍。
+     */
+    private val miniBarPort = object : io.legado.app.help.tts.ReadAloudMiniBarPort {
+        override val state
+            get() = io.legado.app.help.tts.ReadAloudMiniBarProviders.state
+
+        override fun pause() = this@BaseReadAloudService.pauseReadAloud()
+
+        override fun resume() = this@BaseReadAloudService.resumeReadAloud()
+
+        override fun stop() = ReadAloud.stop(this@BaseReadAloudService)
+
+        override fun prevChapter() = this@BaseReadAloudService.prevChapter()
+
+        override fun nextChapter() = this@BaseReadAloudService.nextChapter()
+    }
+
+    /** 重新折叠迷你条状态: 书/章/播放态任一变化都要调用。 */
+    private fun publishMiniBarState() {
+        val book = readBook?.bookValue
+        if (!_isRunFlow.value || book == null) {
+            io.legado.app.help.tts.ReadAloudMiniBarProviders.publish(null)
+            return
+        }
+        io.legado.app.help.tts.ReadAloudMiniBarProviders.publish(
+            io.legado.app.help.tts.ReadAloudMiniBarState(
+                bookUrl = book.bookUrl,
+                bookName = book.name,
+                chapterTitle = readBook?.curTextChapter?.value?.title.orEmpty(),
+                isPlaying = readAloudController.state.value ==
+                    ReadAloudControllerShared.ReadAloudState.PLAYING,
+            )
+        )
+    }
+
+    /**
      * 来电三态状态机 (日志文案/恢复标记语义与下沉前逐字一致)。
      *
      * 平台监听器的注册/注销仍由本类负责 (系统权限与生命周期是 Android 专属)。
@@ -250,6 +289,18 @@ abstract class BaseReadAloudService : BaseService() {
         pause = false
         // 控制器读完末章只置终态, 段末推进不经过本服务: 跟随终态收服务, 通知与运行态一起收束
         // (对照原版 nextChapter 里"没有下一章就 stopSelf")
+        // 迷你播放条: 注册端口 + 跟随控制器状态/章号/当前章标题刷新
+        io.legado.app.help.tts.ReadAloudMiniBarProviders.register(miniBarPort)
+        publishMiniBarState()
+        lifecycleScope.launch {
+            readAloudController.state.collect { publishMiniBarState() }
+        }
+        lifecycleScope.launch {
+            readAloudController.chapterIndex.collect { publishMiniBarState() }
+        }
+        lifecycleScope.launch {
+            readBook?.curTextChapter?.collect { publishMiniBarState() }
+        }
         lifecycleScope.launch {
             readAloudController.state.collectLatest { state ->
                 AppLog.put("TtsDiag 控制器状态=$state pause=$pause", tag = "TtsDiag")
@@ -315,6 +366,8 @@ abstract class BaseReadAloudService : BaseService() {
         chapterWatchJob?.cancel()
         chapterWatchJob = null
         readAloudController.stop()
+        io.legado.app.help.tts.ReadAloudMiniBarProviders.unregister(miniBarPort)
+        io.legado.app.help.tts.ReadAloudMiniBarProviders.publish(null)
         ActiveReadAloudHostPorts.positionPublisher.publishState(Status.STOP)
         notificationManager.cancel(NotificationId.ReadAloudService)
         upMediaSessionPlaybackState(PlaybackStateCompat.STATE_STOPPED)
