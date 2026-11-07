@@ -27,8 +27,10 @@ concurrency:
   group: ${{ github.workflow }}-${{ github.ref }}
   cancel-in-progress: true
 
+# contents: write 只用于"构建失败时把 Gradle 日志传到 Release 资产":
+# Actions 日志接口需要鉴权, 无 token 时只能靠公开的 Release 资产读报错。
 permissions:
-  contents: read
+  contents: write
 
 jobs:
   build:
@@ -52,17 +54,34 @@ jobs:
         uses: gradle/actions/setup-gradle@v5
 
       - name: Build Debug
+        id: build
         run: |
           echo "开始 ${{ env.product }} debug 构建"
           chmod +x gradlew
           # 只出一个 ABI (arm64): 少打一个 ABI + universal, 产物从 ~93MB 降到 ~30MB。
           # 注意这省的是打包/上传环节, 编译耗时不受影响。
-          ./gradlew assemble${{ env.product }}Debug -PonlyAbi=arm64-v8a --build-cache --parallel --warning-mode all
+          # pipefail + tee: 保留 Gradle 退出码, 同时留下完整输出供失败时发布
+          set -o pipefail
+          ./gradlew assemble${{ env.product }}Debug -PonlyAbi=arm64-v8a --build-cache --parallel --warning-mode all 2>&1 | tee "$RUNNER_TEMP/build.log"
           mkdir -p apk/
           # 产物被 build.gradle.kts 的 CopyRenamedApks 拷到 renamed-apks/<variant>/
           find app/build/outputs/renamed-apks -name "*.apk" -exec cp {} apk/ \;
           echo "--- 产物 ---"
           ls -lh apk/
+
+      # 构建失败时把日志尾部传到公开的 Release 资产 (tag: ci-logs):
+      # 报错行必须能被没有仓库权限的人读到, 否则每次都要人工去 Actions 页翻。
+      - name: Publish build log on failure
+        if: failure() && steps.build.outcome == 'failure'
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          tail -c 3000000 "$RUNNER_TEMP/build.log" > "$RUNNER_TEMP/build-tail.log" || true
+          tag=ci-logs
+          gh release view "$tag" >/dev/null 2>&1 || \
+            gh release create "$tag" --title "CI 构建日志" \
+              --notes "失败构建的 Gradle 输出, 供排查编译错误" --prerelease
+          gh release upload "$tag" "$RUNNER_TEMP/build-tail.log" --clobber
 
       - name: Upload APK
         uses: actions/upload-artifact@v6
