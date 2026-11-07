@@ -13,7 +13,6 @@ import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.heightIn
 import androidx.compose.foundation.layout.padding
-import androidx.compose.foundation.layout.weight
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.rememberScrollState
@@ -51,6 +50,7 @@ import io.legado.app.ui.root.CrashLogProvider
 import io.legado.app.ui.root.PlatformCapabilityProviders
 import io.legado.app.ui.root.PlatformServiceProviders
 import io.legado.app.ui.widget.dialog.TextDialog
+import io.legado.app.utils.format
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.launch
 import legado.ui.generated.resources.Res
@@ -383,7 +383,7 @@ private fun CrashLogBody(logs: List<CrashLogProvider.CrashLogEntry>) {
 }
 
 /** 单条日志的纯文本形式：`时间 [tag] 消息`。 */
-private fun formatEntry(entry: AppLogEntry, tzOffset: Long): String {
+internal fun formatEntry(entry: AppLogEntry, tzOffset: Long): String {
     val head = formatLogTime(entry.time, tzOffset)
     val tag = if (entry.tag.isEmpty()) "" else "[${entry.tag}] "
     return "$head $tag${entry.message}"
@@ -395,7 +395,7 @@ private fun formatEntry(entry: AppLogEntry, tzOffset: Long): String {
  * 使用 Howard Hinnant 的 civil_from_days 算法 + [tzOffsetMs] 时区偏移，
  * 纯 Kotlin 实现，不依赖 java.util.Date / SimpleDateFormat (KMP 安全)。
  */
-private fun formatLogTime(epochMillis: Long, tzOffsetMs: Long): String {
+internal fun formatLogTime(epochMillis: Long, tzOffsetMs: Long): String {
     val localMillis = epochMillis + tzOffsetMs
     val totalSeconds = localMillis / 1000
     val millis = (localMillis % 1000).toInt().let { if (it < 0) it + 1000 else it }
