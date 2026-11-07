@@ -6,6 +6,7 @@ import androidx.compose.runtime.getValue
 import androidx.compose.runtime.produceState
 import androidx.compose.runtime.remember
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.geometry.CornerRadius
 import androidx.compose.ui.geometry.Offset
 import androidx.compose.ui.geometry.Size
 import androidx.compose.ui.graphics.Color
@@ -491,7 +492,8 @@ private fun DrawScope.drawPageContentInner(
  * 该层为纯粹的排版快照渲染，不包含任何动态选区或高亮背景色块。
  *
  * @param ttsLines 朗读高亮行索引闭区间（[IntRange.EMPTY] = 本页无朗读高亮）：
- *   命中行只换文字色，不画任何矩形（对照 app 端 isReadAloud 行标志的视觉）
+ *   默认只换文字色、不画矩形；[ReaderDrawStyle.readAloudBackground] 非空时改为垫底色，
+ *   文字保持正文色（用户需求 2026-11-07，可在朗读设置里切换）
  * @param chapterHighlights 批注/关键词命中区间：E-Ink 下本层承担其"字形色 + 行底下划线"
  *   （低 alpha 色块在灰阶屏不可读），由 [drawOverlayLayers] 跳过色块绘制
  */
@@ -513,6 +515,22 @@ private fun DrawScope.drawBasePageContent(
         val lineTop = textLine.lineTop
         val lineBase = textLine.lineBase
         val lineHeight = textLine.lineBottom - textLine.lineTop
+        // 朗读底色方案：整行铺底，段落首/末行收圆角、中间行直角拼接，避免行间出现缺口
+        val readAloudBackground = style.readAloudBackground
+        if (isReadAloud && readAloudBackground != null) {
+            val radius = if (lineIndex == ttsLines.first || lineIndex == ttsLines.last) {
+                3.dp.toPx()
+            } else {
+                0f
+            }
+            val left = textLine.lineStart + textLine.indentWidth
+            drawRoundRect(
+                color = readAloudBackground,
+                topLeft = Offset(left, lineTop),
+                size = Size((textLine.lineEnd - left).coerceAtLeast(0f), lineHeight),
+                cornerRadius = CornerRadius(radius, radius),
+            )
+        }
         var columnChapterOffset = 0
         for (columnIndex in textLine.columns.indices) {
             val column = textLine.columns[columnIndex]
@@ -535,10 +553,12 @@ private fun DrawScope.drawBasePageContent(
                             it.chapterIndex == textPage.chapterIndex &&
                                 columnStart < it.endExclusive && columnEnd > it.start
                         }
+                        // 底色方案下朗读行保持正文色：底色已经足够标识，再换字色会糊成一团
+                        val isReadAloudText = isReadAloud && readAloudBackground == null
                         drawTextColumn(
                             column = column,
                             layout = cached,
-                            textColor = if (isReadAloud || isSearchHit || isEInkHighlightHit) {
+                            textColor = if (isReadAloudText || isSearchHit || isEInkHighlightHit) {
                                 style.accentColor
                             } else {
                                 style.textColor

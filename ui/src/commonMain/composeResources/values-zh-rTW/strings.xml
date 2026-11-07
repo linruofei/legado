@@ -106,6 +106,8 @@
     <string name="resume">繼續</string>
     <string name="set_timer">定時</string>
     <string name="read_aloud_pause">朗讀暫停</string>
+    <string name="read_aloud_pause_on_back">按返回鍵時暫停朗讀</string>
+    <string name="read_aloud_pause_on_back_summary">關閉後按返回鍵直接離開閱讀頁，朗讀繼續在背景播放，可用通知列或鎖定螢幕控制</string>
     <string name="read_aloud_timer">正在朗讀(還剩%1$d分鐘)</string>
     <string name="playing_timer">正在播放(還剩%1$d分鐘)</string>
     <string name="pt_hide_navigation_bar">隱藏導航欄</string>
@@ -529,6 +531,8 @@
     <string name="export_to_web_dav">匯出到WebDav</string>
     <string name="debug">除錯</string>
     <string name="crash_log">當機日誌</string>
+    <string name="debug_log">偵錯日誌</string>
+    <string name="memory_log">記憶體日誌</string>
     <string name="image_style">圖片樣式</string>
     <string name="system_tts">系統TTS</string>
     <string name="export_type">匯出格式</string>
@@ -810,6 +814,10 @@
     <string name="tts_prefetch_count_summary">提前下載目前段落之後若干段以及下一章開頭的語音，減少換段等待</string>
     <string name="tts_prefetch_off">關閉</string>
     <string name="tts_prefetch_segments">%1$d 段</string>
+    <string name="tts_highlight_mode">朗讀高亮方式</string>
+    <string name="tts_highlight_mode_summary">朗讀中的段落用文字換色標識，或在文字下墊一層底色</string>
+    <string name="tts_highlight_mode_text">文字顏色</string>
+    <string name="tts_highlight_mode_background">背景顏色</string>
     <string name="pause_read_aloud_while_phone_calls_title">來電期間暫停朗讀</string>
     <string name="pause_read_aloud_while_phone_calls_summary">在通話期間暫停朗讀，需要讀取手機狀態權限</string>
     <string name="read_aloud_read_phone_state_permission_rationale">閱讀需要讀取手機狀態實現來電期間暫停朗讀功能</string>

@@ -9,7 +9,7 @@ import legado.ui.generated.resources.Res
 import legado.ui.generated.resources.check_update
 import legado.ui.generated.resources.contributors
 import legado.ui.generated.resources.contributors_summary
-import legado.ui.generated.resources.crash_log
+import legado.ui.generated.resources.debug_log
 import legado.ui.generated.resources.create_heap_dump
 import legado.ui.generated.resources.current_version
 import legado.ui.generated.resources.disclaimer
@@ -49,7 +49,7 @@ fun AboutScreen(
     val titleCurrentVersion = stringResource(Res.string.current_version)
     val titleCheckUpdate = stringResource(Res.string.check_update)
     val titleOther = stringResource(Res.string.other)
-    val titleCrashLog = stringResource(Res.string.crash_log)
+    val titleDebugLog = stringResource(Res.string.debug_log)
     val titleSaveLog = stringResource(Res.string.save_log)
     val titleCreateHeapDump = stringResource(Res.string.create_heap_dump)
     val titlePrivacyPolicy = stringResource(Res.string.privacy_policy)
@@ -82,8 +82,8 @@ fun AboutScreen(
 
         preferenceCategory(titleOther)
         preference(
-            title = titleCrashLog,
-            onClick = { actions.onShowCrashLogs() },
+            title = titleDebugLog,
+            onClick = { actions.onOpenDebugLog() },
         )
         preference(
             title = titleSaveLog,

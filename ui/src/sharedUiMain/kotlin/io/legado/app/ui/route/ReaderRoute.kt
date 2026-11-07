@@ -474,8 +474,11 @@ fun ReaderRoute(
             return@AppBackHandler
         }
         // ② 朗读暂停 (原版: BaseReadAloudService.isPlay() = isRun && !pause, 暂停态不重复触发)
+        // 开关 readAloudPauseOnBack 关闭时跳过这一段: 返回键直接退出阅读页, 朗读继续在后台播
+        // (用户需求 2026-11-07, 配合通知栏/锁屏媒体控件)。按下时求值, 改完开关立即生效。
         val readBookPlatform = ReadBookPlatforms.get()
-        if (readBookPlatform.isReadAloudRun && !readBookPlatform.isReadAloudPause) {
+        val pauseOnBack = PreferenceProviders.get().getBoolean(PreferKey.readAloudPauseOnBack, true)
+        if (pauseOnBack && readBookPlatform.isReadAloudRun && !readBookPlatform.isReadAloudPause) {
             readBookPlatform.pauseReadAloud()
             Toasters.get().toast(readAloudPauseText)
             return@AppBackHandler

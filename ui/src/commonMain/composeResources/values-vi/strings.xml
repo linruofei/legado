@@ -104,6 +104,8 @@
     <string name="resume">Tiếp tục</string>
     <string name="set_timer">Hẹn giờ</string>
     <string name="read_aloud_pause">Tạm dừng đọc</string>
+    <string name="read_aloud_pause_on_back">Tạm dừng khi nhấn quay lại</string>
+    <string name="read_aloud_pause_on_back_summary">Khi tắt, nút quay lại thoát trang đọc và vẫn tiếp tục đọc trong nền</string>
     <string name="read_aloud_timer">Đang đọc (còn %1$d phút)</string>
     <string name="playing_timer">Đang phát (còn %1$d phút)</string>
     <string name="pt_hide_navigation_bar">Ẩn thanh điều hướng</string>
@@ -517,6 +519,8 @@
     <string name="export_to_web_dav">Xuất sang WebDav</string>
     <string name="debug">Gỡ lỗi</string>
     <string name="crash_log">Nhật ký sự cố</string>
+    <string name="debug_log">Nhật ký gỡ lỗi</string>
+    <string name="memory_log">Nhật ký bộ nhớ</string>
     <string name="image_style">Kiểu hình ảnh</string>
     <string name="system_tts">TTS hệ thống</string>
     <string name="export_type">Định dạng tệp xuất</string>
@@ -788,6 +792,10 @@
     <string name="tts_prefetch_count_summary">Tải trước âm thanh của vài đoạn tiếp theo (và phần đầu chương sau), giảm thời gian chờ khi chuyển đoạn</string>
     <string name="tts_prefetch_off">Tắt</string>
     <string name="tts_prefetch_segments">%1$d đoạn</string>
+    <string name="tts_highlight_mode">Kiểu làm nổi đoạn đang đọc</string>
+    <string name="tts_highlight_mode_summary">Đổi màu chữ của đoạn đang đọc, hoặc tô nền phía sau chữ</string>
+    <string name="tts_highlight_mode_text">Màu chữ</string>
+    <string name="tts_highlight_mode_background">Màu nền</string>
     <string name="pause_read_aloud_while_phone_calls_title">Tạm dừng đọc trong khi gọi điện</string>
     <string name="pause_read_aloud_while_phone_calls_summary">Tạm dừng đọc trong khi gọi điện, cần quyền đọc trạng thái điện thoại</string>
     <string name="read_aloud_read_phone_state_permission_rationale">Đọc cần đọc trạng thái điện thoại để thực hiện chức năng tạm dừng đọc trong khi gọi</string>

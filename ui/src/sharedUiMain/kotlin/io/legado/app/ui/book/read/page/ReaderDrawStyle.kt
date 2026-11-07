@@ -2,6 +2,7 @@ package io.legado.app.ui.book.read.page
 
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.Immutable
+import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableIntStateOf
@@ -53,6 +54,12 @@ data class ReaderDrawStyle(
     val tipColor: Color,
     val underline: Boolean,
     val isEInk: Boolean,
+    /**
+     * 朗读命中行的底色；null = 沿用历史行为（只换文字色）。
+     *
+     * E-Ink 恒为 null：灰阶屏上低 alpha 色块不可读，走"文字色 + 行底下划线"。
+     */
+    val readAloudBackground: Color? = null,
 )
 
 /**
@@ -67,6 +74,8 @@ fun rememberReaderDrawStyle(): ReaderDrawStyle {
     val accentColor = AppTheme.colors.accent
     val isEInk = LocalEInk.current
     val eventBus = LocalEventBusProvider.current
+    // 朗读高亮方式：设置页改完要立刻重绘，故订阅状态流并作 remember 键
+    val readAloudHighlightMode by ReaderHighlightMode.mode.collectAsState()
 
     // 切日/夜换的是 ReadBookConfig 的日/夜分支（curTextColor/curBgColor 直读 prefs、无快照），
     // 只发 RECREATE 不发 ReadConfigChange，故两个事件源合流（同 DesktopReaderPlatformProvider
@@ -102,6 +111,7 @@ fun rememberReaderDrawStyle(): ReaderDrawStyle {
         titleFont,
         accentColor,
         isEInk,
+        readAloudHighlightMode,
         readBookConfig,
         readTipConfig
     ) {
@@ -113,6 +123,7 @@ fun rememberReaderDrawStyle(): ReaderDrawStyle {
             titleFont,
             accentColor,
             isEInk,
+            readAloudHighlightMode,
         )
     }
 }
@@ -137,6 +148,7 @@ private fun buildReaderDrawStyle(
     titleFont: ReaderFontDescription,
     accentColor: Color,
     isEInk: Boolean,
+    readAloudHighlightMode: String,
 ): ReaderDrawStyle {
     val textColor = Color(readBookConfig.textColor)
     // 与 app 端 getPaints 一致：0 标题粗/正文常规，1 标题 900/正文粗，2 标题常规/正文 300；
@@ -185,6 +197,12 @@ private fun buildReaderDrawStyle(
         tipColor = tipColor,
         underline = readBookConfig.underline,
         isEInk = isEInk,
+        // 朗读底色：E-Ink 下不画（灰阶屏不可读），维持文字色 + 下划线方案
+        readAloudBackground = if (!isEInk && readAloudHighlightMode == ReaderHighlightMode.BACKGROUND) {
+            accentColor.copy(alpha = ReaderHighlightMode.BACKGROUND_ALPHA)
+        } else {
+            null
+        },
     )
 }
 

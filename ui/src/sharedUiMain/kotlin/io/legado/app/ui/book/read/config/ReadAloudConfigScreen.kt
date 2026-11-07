@@ -3,6 +3,7 @@ package io.legado.app.ui.book.read.config
 import androidx.compose.runtime.Composable
 import io.legado.app.constant.PreferKey
 import io.legado.app.help.config.AppConfigConstants
+import io.legado.app.ui.book.read.page.ReaderHighlightMode
 import io.legado.app.ui.compose.preference.PreferenceScreen
 import io.legado.app.ui.compose.preference.listPreference
 import io.legado.app.ui.compose.preference.preference
@@ -16,12 +17,18 @@ import legado.ui.generated.resources.pref_media_button_per_next_summary
 import legado.ui.generated.resources.read_aloud_by_page
 import legado.ui.generated.resources.read_aloud_by_page_summary
 import legado.ui.generated.resources.read_aloud_wake_lock
+import legado.ui.generated.resources.read_aloud_pause_on_back
+import legado.ui.generated.resources.read_aloud_pause_on_back_summary
 import legado.ui.generated.resources.read_aloud_wake_lock_summary
 import legado.ui.generated.resources.speak_engine
 import legado.ui.generated.resources.stream_read_aloud_audio
 import legado.ui.generated.resources.stream_read_aloud_audio_summary
 import legado.ui.generated.resources.sys_tts_config
 import legado.ui.generated.resources.sys_tts_config_summary
+import legado.ui.generated.resources.tts_highlight_mode
+import legado.ui.generated.resources.tts_highlight_mode_background
+import legado.ui.generated.resources.tts_highlight_mode_summary
+import legado.ui.generated.resources.tts_highlight_mode_text
 import legado.ui.generated.resources.tts_prefetch_count
 import legado.ui.generated.resources.tts_prefetch_count_summary
 import legado.ui.generated.resources.tts_prefetch_off
@@ -72,6 +79,16 @@ fun ReadAloudConfigScreen(
         stringResource(Res.string.tts_prefetch_segments, 10),
     )
     val prefetchValues = listOf("0", "1", "2", "3", "5", "8", "10")
+    val titlePauseOnBack = stringResource(Res.string.read_aloud_pause_on_back)
+    val summaryPauseOnBack = stringResource(Res.string.read_aloud_pause_on_back_summary)
+    val titleHighlightMode = stringResource(Res.string.tts_highlight_mode)
+    val summaryHighlightMode = stringResource(Res.string.tts_highlight_mode_summary)
+    // 档位与 PreferKey.readAloudHighlightMode 的存储值一一对应 (存字符串)
+    val highlightModeEntries = listOf(
+        stringResource(Res.string.tts_highlight_mode_text),
+        stringResource(Res.string.tts_highlight_mode_background),
+    )
+    val highlightModeValues = listOf(ReaderHighlightMode.TEXT, ReaderHighlightMode.BACKGROUND)
     val titleSpeakEngine = stringResource(Res.string.speak_engine)
     val titleSysTtsConfig = stringResource(Res.string.sys_tts_config)
     val summarySysTtsConfig = stringResource(Res.string.sys_tts_config_summary)
@@ -120,6 +137,23 @@ fun ReadAloudConfigScreen(
                 values = prefetchValues,
                 defaultValue = AppConfigConstants.httpTtsPrefetchCountDefault.toString(),
                 summary = summaryPrefetchCount,
+            )
+            // 返回键是否先暂停朗读: 关闭后返回直接退出阅读页, 朗读在后台继续
+            switchPreference(
+                prefKey = PreferKey.readAloudPauseOnBack,
+                title = titlePauseOnBack,
+                summary = summaryPauseOnBack,
+                defaultValue = true,
+            )
+            // 朗读高亮方式: 文字色 (默认) / 背景色; 改完由 ReaderHighlightMode 的状态流驱动画布重绘
+            listPreference(
+                prefKey = PreferKey.readAloudHighlightMode,
+                title = titleHighlightMode,
+                entries = highlightModeEntries,
+                values = highlightModeValues,
+                defaultValue = ReaderHighlightMode.TEXT,
+                summary = summaryHighlightMode,
+                onValueChange = { ReaderHighlightMode.update(it) },
             )
             preference(
                 title = titleSpeakEngine,

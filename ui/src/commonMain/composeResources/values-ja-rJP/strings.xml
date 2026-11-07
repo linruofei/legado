@@ -105,6 +105,8 @@
     <string name="resume">Resume</string>
     <string name="set_timer">Timer</string>
     <string name="read_aloud_pause">Speak Paused</string>
+    <string name="read_aloud_pause_on_back">戻るキーで一時停止</string>
+    <string name="read_aloud_pause_on_back_summary">オフにすると戻るキーで読書画面を終了し、読み上げはバックグラウンドで続きます</string>
     <string name="read_aloud_timer">Speaking(%1$d min left)</string>
     <string name="playing_timer">Playing(%1$d min left)</string>
     <string name="pt_hide_navigation_bar">Hide navigation bar</string>
@@ -512,6 +514,8 @@
     <string name="export_to_web_dav">Export to WebDav</string>
     <string name="debug">Debug</string>
     <string name="crash_log">Crash log</string>
+    <string name="debug_log">デバッグログ</string>
+    <string name="memory_log">メモリログ</string>
     <string name="image_style">Style of Images</string>
     <string name="system_tts">System tts</string>
     <string name="export_type">Exported file format</string>
@@ -788,6 +792,10 @@
     <string name="tts_prefetch_count_summary">現在の段落より後の数段落と次章の冒頭を事前にダウンロードし、段落切り替えの待ち時間を減らします</string>
     <string name="tts_prefetch_off">オフ</string>
     <string name="tts_prefetch_segments">%1$d 段落</string>
+    <string name="tts_highlight_mode">読み上げハイライト</string>
+    <string name="tts_highlight_mode_summary">読み上げ中の段落を文字色で示すか、背景色で示すかを選びます</string>
+    <string name="tts_highlight_mode_text">文字色</string>
+    <string name="tts_highlight_mode_background">背景色</string>
     <string name="pause_read_aloud_while_phone_calls_title">来电期间暂停朗读</string>
     <string name="pause_read_aloud_while_phone_calls_summary">在通话期间暂停朗读，需要读取手机状态权限</string>
     <string name="read_aloud_read_phone_state_permission_rationale">阅读需要读取手机状态实现来电期间暂停朗读功能</string>

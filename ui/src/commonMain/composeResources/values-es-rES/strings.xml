@@ -105,6 +105,8 @@
     <string name="resume">Continuar</string>
     <string name="set_timer">Cronómetro</string>
     <string name="read_aloud_pause">Voz pausada</string>
+    <string name="read_aloud_pause_on_back">Pausar al salir con Atrás</string>
+    <string name="read_aloud_pause_on_back_summary">Desactivado: Atrás sale del lector y la lectura continúa en segundo plano</string>
     <string name="read_aloud_timer">Hablando (%1$d min restantes)</string>
     <string name="playing_timer">Reproduciendo (%1$d min restantes)</string>
     <string name="pt_hide_navigation_bar">Oculta barra de navegación</string>
@@ -512,6 +514,8 @@
     <string name="export_to_web_dav">Exportar a WebDav</string>
     <string name="debug">Depurar</string>
     <string name="crash_log">Registro de fallos</string>
+    <string name="debug_log">Registro de depuración</string>
+    <string name="memory_log">Registro en memoria</string>
     <string name="image_style">Formato de imagen</string>
     <string name="system_tts">Sistema TTS</string>
     <string name="export_type">Formato de exportación</string>
@@ -788,6 +792,10 @@
     <string name="tts_prefetch_count_summary">Descarga por adelantado el audio de los siguientes párrafos (y del inicio del capítulo siguiente); 0 lo desactiva</string>
     <string name="tts_prefetch_off">Desactivado</string>
     <string name="tts_prefetch_segments">%1$d párrafos</string>
+    <string name="tts_highlight_mode">Resaltado de lectura en voz alta</string>
+    <string name="tts_highlight_mode_summary">Colorea el texto del párrafo leído o añade un fondo detrás</string>
+    <string name="tts_highlight_mode_text">Color del texto</string>
+    <string name="tts_highlight_mode_background">Color de fondo</string>
     <string name="pause_read_aloud_while_phone_calls_title">来电期间暂停朗读</string>
     <string name="pause_read_aloud_while_phone_calls_summary">在通话期间暂停朗读，需要读取手机状态权限</string>
     <string name="read_aloud_read_phone_state_permission_rationale">阅读需要读取手机状态实现来电期间暂停朗读功能</string>

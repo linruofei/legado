@@ -19,14 +19,17 @@ import kotlin.concurrent.Volatile
  */
 object AppLog {
 
+    /** 内存环形列表上限 (用户需求 2026-11-07: 调试日志页面要能翻, 100 条不够用)。 */
+    const val MAX_LOG_COUNT = 500
+
     private val lock = SynchronizedObject()
-    private val mLogs = ArrayList<Triple<Long, String, Throwable?>>()
-    private val _logsFlow = MutableStateFlow<List<Triple<Long, String, Throwable?>>>(emptyList())
+    private val mLogs = ArrayList<AppLogEntry>()
+    private val _logsFlow = MutableStateFlow<List<AppLogEntry>>(emptyList())
 
     val logs get() = synchronized(lock) { mLogs.toList() }
 
     /** 日志快照流；每次新增或清空日志时立即发布，供 UI 响应式订阅。 */
-    val logsFlow: StateFlow<List<Triple<Long, String, Throwable?>>> = _logsFlow.asStateFlow()
+    val logsFlow: StateFlow<List<AppLogEntry>> = _logsFlow.asStateFlow()
 
     @Volatile
     private var host: AppLogHost? = null
@@ -70,10 +73,10 @@ object AppLog {
                 "$message\n${throwable.stackTraceToString()}"
             }
             h?.write(tag, logMessage)
-            if (mLogs.size > 100) {
+            if (mLogs.size >= MAX_LOG_COUNT) {
                 mLogs.removeLastOrNull()
             }
-            mLogs.add(0, Triple(now, message, throwable))
+            mLogs.add(0, AppLogEntry(now, tag, message, throwable))
             h?.debugPrint(tag, message, throwable)
             publishLogsLocked()
         }
@@ -104,10 +107,10 @@ object AppLog {
         synchronized(lock) {
             val now = h?.currentTimeMillis() ?: 0L
             if (toast) h?.toast(message)
-            if (mLogs.size > 100) {
+            if (mLogs.size >= MAX_LOG_COUNT) {
                 mLogs.removeLastOrNull()
             }
-            mLogs.add(0, Triple(now, message, throwable))
+            mLogs.add(0, AppLogEntry(now, tag, message, throwable))
             h?.debugPrint(tag, message, throwable)
             publishLogsLocked()
         }
@@ -164,6 +167,19 @@ object AppLog {
     fun timeZoneOffsetMillis(): Long = host?.timeZoneOffsetMillis() ?: 0L
 
 }
+
+/**
+ * 一条应用日志。
+ *
+ * 带 [tag] 是因为调试日志页要按组件过滤(见 [AppLog.put] 的 tag 参数);
+ * 迁移前内存表存的是 `Triple(时间, 消息, 异常)`, tag 在被丢弃了。
+ */
+data class AppLogEntry(
+    val time: Long,
+    val tag: String,
+    val message: String,
+    val throwable: Throwable?,
+)
 
 /**
  * AppLog 的平台/宿主副作用出口, 由宿主(安卓 App.onCreate)注册。

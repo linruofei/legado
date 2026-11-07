@@ -90,6 +90,10 @@
     <string name="tts_prefetch_count_summary">Download the audio of the next few segments (and the beginning of the next chapter) ahead of time; 0 disables it</string>
     <string name="tts_prefetch_off">Off</string>
     <string name="tts_prefetch_segments">%1$d segments</string>
+    <string name="tts_highlight_mode">Read-aloud highlight</string>
+    <string name="tts_highlight_mode_summary">Colour the text of the spoken lines, or place a background behind them</string>
+    <string name="tts_highlight_mode_text">Text colour</string>
+    <string name="tts_highlight_mode_background">Background colour</string>
     <string name="speak_engine">Speak Engine</string>
     <string name="sys_tts_config">System tts Settings</string>
     <string name="sys_tts_config_summary">Open the system tts settings interface</string>
@@ -372,6 +376,8 @@
     <string name="join_telegram_group">Join Telegram group</string>
     <string name="current_version">Current version</string>
     <string name="crash_log">Crash log</string>
+    <string name="debug_log">Debug log</string>
+    <string name="memory_log">Memory log</string>
     <string name="save_log">Save logs</string>
     <string name="create_heap_dump">Create heap dump</string>
     <string name="record_debug_log">Record debug log</string>
@@ -813,6 +819,8 @@
     <string name="read_aloud_timer">Speaking(%1$d min left)</string>
     <string name="read_aloud_t">Speaking</string>
     <string name="read_aloud_pause">Speak Paused</string>
+    <string name="read_aloud_pause_on_back">Pause reading when pressing Back</string>
+    <string name="read_aloud_pause_on_back_summary">When off, Back leaves the reader and reading keeps playing in the background</string>
     <string name="read_aloud_s">Click to open the Reading</string>
     <string name="resume">Resume</string>
     <string name="audio">Audio</string>

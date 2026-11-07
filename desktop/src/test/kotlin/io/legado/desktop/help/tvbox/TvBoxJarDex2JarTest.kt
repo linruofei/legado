@@ -120,9 +120,9 @@ class TvBoxJarDex2JarTest {
         }.exceptionOrNull()
         assertTrue("壳 jar 在桌面端应装载失败", error != null)
 
-        val logged = AppLog.logs.firstOrNull { it.second.contains("Init.init 调用失败") }
-        assertTrue("Init 初始化失败必须留痕, 实际日志: ${AppLog.logs.map { it.second }}", logged != null)
-        val root = generateSequence<Throwable>(logged!!.third) { it.cause }.last()
+        val logged = AppLog.logs.firstOrNull { it.message.contains("Init.init 调用失败") }
+        assertTrue("Init 初始化失败必须留痕, 实际日志: ${AppLog.logs.map { it.message }}", logged != null)
+        val root = generateSequence<Throwable>(logged!!.throwable) { it.cause }.last()
         assertTrue(
             "留痕根因应是缺失类 (ClassNotFound/NoClassDefFound), 实际: $root",
             root is ClassNotFoundException || root is NoClassDefFoundError,

@@ -273,6 +273,11 @@ sealed interface AppRoute {
     @SerialName("about")
     data object About : AppRoute
 
+    /** 调试日志: 内存日志 + 崩溃日志 (取代原关于页的崩溃日志弹窗)。 */
+    @Serializable
+    @SerialName("debug_log")
+    data object DebugLog : AppRoute
+
     @Serializable
     @SerialName("read_record")
     data object ReadRecord : AppRoute

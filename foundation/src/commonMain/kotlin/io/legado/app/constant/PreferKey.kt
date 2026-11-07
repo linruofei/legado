@@ -191,6 +191,20 @@ object PreferKey {
     /** 音量键翻页总开关: 关闭后音量键恢复系统音量, 小说阅读页不再拦键。 */
     const val volumeKeyPage = "volumeKeyPage"
 
+    /**
+     * 朗读时按返回键是否先暂停: 默认开 (历史行为)。
+     * 关闭后返回键直接退出阅读页, 朗读继续在后台播放, 由通知栏/锁屏媒体控件控制。
+     */
+    const val readAloudPauseOnBack = "readAloudPauseOnBack"
+
+    /**
+     * 朗读高亮的绘制方式: "text" 只改文字色 (默认), "background" 给命中行加底色。
+     *
+     * 存字符串 (listPreference 只 putString), 读取端见
+     * [io.legado.app.ui.book.read.page.ReaderHighlightMode]。
+     */
+    const val readAloudHighlightMode = "readAloudHighlightMode"
+
     const val pauseReadAloudWhilePhoneCalls = "pauseReadAloudWhilePhoneCalls"
     const val readAloudByMediaButton = "readAloudByMediaButton"
     const val devFeat = "devFeat"

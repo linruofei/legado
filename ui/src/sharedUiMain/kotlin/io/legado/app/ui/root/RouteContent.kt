@@ -65,6 +65,11 @@ fun RouteContent(
             true
         }
 
+        is AppRoute.DebugLog -> {
+            io.legado.app.ui.about.DebugLogScreen(navigator)
+            true
+        }
+
         is AppRoute.BackupConfig -> {
             BackupConfigRoute(entry, navigator, screenModelStore)
             true

@@ -26,6 +26,7 @@ import io.legado.app.ui.about.AboutUiState
 import io.legado.app.ui.compose.component.AppTitleBar
 import io.legado.app.ui.compose.theme.AppTheme
 import io.legado.app.ui.root.AppNavigator
+import io.legado.app.ui.root.AppRoute
 import io.legado.app.ui.root.AppOverlay
 import io.legado.app.ui.root.PlatformCapabilityProviders
 import io.legado.app.ui.root.PlatformServiceProviders
@@ -133,9 +134,9 @@ fun AboutRoute(
             scope.launch { screenModel.checkUpdate(strLatestVersion, strCheckFailed) }
         }
 
-        // 显示崩溃日志: 委托平台能力 (app: CrashLogsDialog Fragment; desktop: 共享 CrashLogsDialog)
-        override fun onShowCrashLogs() {
-            PlatformCapabilityProviders.get().showCrashLogs()
+        // 调试日志: 走 shared 独立页面 (内存日志 + 崩溃日志), 不再弹平台崩溃日志对话框
+        override fun onOpenDebugLog() {
+            navigator.push(AppRoute.DebugLog)
         }
 
         // 保存日志到书籍保存位置: 委托平台能力 (app: copyLogs+copyHeapDump; desktop: 文件选择器导出)

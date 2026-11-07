@@ -90,6 +90,10 @@
     <string name="tts_prefetch_count_summary">提前下载当前段之后若干段以及下一章开头的音频，减少换段等待</string>
     <string name="tts_prefetch_off">关闭</string>
     <string name="tts_prefetch_segments">%1$d 段</string>
+    <string name="tts_highlight_mode">朗读高亮方式</string>
+    <string name="tts_highlight_mode_summary">朗读中的段落用文字换色标识，或在文字下垫一层底色</string>
+    <string name="tts_highlight_mode_text">文字颜色</string>
+    <string name="tts_highlight_mode_background">背景颜色</string>
     <string name="speak_engine">朗读引擎</string>
     <string name="sys_tts_config">系统 TTS 设置</string>
     <string name="sys_tts_config_summary">打开系统 TTS 设置界面</string>
@@ -372,6 +376,8 @@
     <string name="join_telegram_group">加入 Telegram 群</string>
     <string name="current_version">当前版本</string>
     <string name="crash_log">崩溃日志</string>
+    <string name="debug_log">调试日志</string>
+    <string name="memory_log">内存日志</string>
     <string name="save_log">保存日志</string>
     <string name="create_heap_dump">创建堆转储</string>
     <string name="record_debug_log">记录调试日志</string>
@@ -813,6 +819,8 @@
     <string name="read_aloud_timer">正在朗读（还剩 %1$d 分钟）</string>
     <string name="read_aloud_t">正在朗读</string>
     <string name="read_aloud_pause">朗读暂停</string>
+    <string name="read_aloud_pause_on_back">按返回键时暂停朗读</string>
+    <string name="read_aloud_pause_on_back_summary">关闭后按返回键直接退出阅读页，朗读继续在后台播放，可用通知栏或锁屏控件控制</string>
     <string name="read_aloud_s">点击打开阅读界面</string>
     <string name="resume">继续</string>
     <string name="audio">音频</string>

@@ -43,7 +43,7 @@ data class AboutUiState(
  * - [onCopyVersion]: 复制当前版本号
  * - [onOpenUrl]: 打开外链 (贡献者 / Telegram, URL 由 state 传入)
  * - [onCheckUpdate]: 检查更新
- * - [onShowCrashLogs]: 显示崩溃日志
+ * - [onOpenDebugLog]: 打开调试日志页 (内存日志 + 崩溃日志)
  * - [onSaveLog]: 保存日志 (Android: 打包 log 目录与 logcat 到书籍保存位置; 桌面: 打包缓存 log 目录)
  * - [onCreateHeapDump]: 创建堆转储 (Android: CrashHandler.doHeapDump; 桌面: HotSpotDiagnosticMXBean)
  * - [onShowMdFile]: 显示 MD 文件 (title + fileName, 宿主读 composeResources 后弹 MD 对话框)
@@ -54,7 +54,7 @@ interface AboutUiActions {
     fun onCopyVersion()
     fun onOpenUrl(url: String)
     fun onCheckUpdate()
-    fun onShowCrashLogs()
+    fun onOpenDebugLog()
     fun onSaveLog()
     fun onCreateHeapDump()
     fun onShowMdFile(title: String, fileName: String)
