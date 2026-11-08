@@ -1,12 +1,17 @@
 name: Release APK
 
-# 正式包构建: 推送形如 3.27.0101 / v3.27.0101 的 tag 时触发, 也支持手动指定版本号。
+# 正式包自动发版: push 到 master 即出一版, 版本号按 CI 构建时刻生成 (3.yy.MMddHHmm, GMT+8),
+# tag 由 gh release create 自动创建, 指向本次提交。
+# 想指定版本号时用手动触发 (version 留空则仍按时间生成)。
 #
 # 用途不只是"出一个能装的包", 还要让应用内"检查更新"能发现自己:
 #   - tag 名 = versionName (AppVersions 按 tag_name 比较版本), 所以构建时用 -PappVersion 对齐
 #   - Release 不能是 prerelease/draft (GitHub /releases/latest 不返回预发布)
 #   - 资产名带 arm64, 让 GitHubReleaseChecker 的架构排序命中本机 ABI
 #   - 必须用正式密钥签名: 否则每次升级都因签名不同装不上去
+#   - 版本号必须严格递增: 同一分钟内多次推送会顺延分钟, 见 Resolve version 步骤
+#
+# 文档/CI 配置类的提交不触发 (见 paths-ignore), 否则改个 README 也会发一版。
 #
 # 需要 4 个 secret: RELEASE_KEY_STORE(base64) / RELEASE_KEY_ALIAS /
 # RELEASE_KEY_PASSWORD / RELEASE_STORE_PASSWORD, 与 app/build.gradle.kts 的
@@ -14,9 +19,14 @@ name: Release APK
 
 on:
   push:
-    tags:
-      - '[0-9]*'
-      - 'v[0-9]*'
+    branches:
+      - master
+    paths-ignore:
+      - '**.md'
+      - '**/assets/**'
+      - '**/ISSUE_TEMPLATE/**'
+      - '**/modules/web/**'
+      - '.github/**'
   workflow_dispatch:
     inputs:
       version:
@@ -45,16 +55,24 @@ jobs:
         id: ver
         run: |
           set -euo pipefail
-          if [ "${{ github.event_name }}" = "workflow_dispatch" ]; then
-            raw="${{ inputs.version }}"
-            if [ -z "${raw:-}" ]; then
-              # 与本地构建同一套格式 (app/build.gradle.kts 的 releaseTime): 3.yy.MMddHHmm, GMT+8
-              raw="3.$(TZ=Asia/Shanghai date +%y.%m%d%H%M)"
-            fi
+          requested="${{ inputs.version }}"
+          if [ -n "${requested:-}" ]; then
+            version="${requested#v}"
           else
-            raw="${GITHUB_REF_NAME}"
+            # 与本地构建同一套格式 (app/build.gradle.kts 的 releaseTime): 3.yy.MMddHHmm, GMT+8
+            version="3.$(TZ=Asia/Shanghai date +%y.%m%d%H%M)"
+            # 同一分钟内连推两次会撞版本号, 而版本号必须严格递增才能触发应用内更新提示,
+            # 所以撞了就往后顺延一分钟, 直到这个 tag 名没被占用。
+            step=0
+            while git ls-remote --tags --exit-code origin "refs/tags/$version" >/dev/null 2>&1; do
+              step=$((step + 1))
+              if [ "$step" -gt 120 ]; then
+                echo "::error::连续 120 分钟内的版本号都被占用, 请手动指定版本号"
+                exit 1
+              fi
+              version="3.$(TZ=Asia/Shanghai date -d "+${step} minute" +%y.%m%d%H%M)"
+            done
           fi
-          version="${raw#v}"
           echo "version=$version" >> "$GITHUB_OUTPUT"
           echo "版本号: $version"
 
@@ -116,11 +134,12 @@ jobs:
           apk=$(ls apk/*.apk | head -1)
           asset="legado_${VERSION}_arm64.apk"
           cp "$apk" "$asset"
-          # 正式渠道走 /releases/latest, 会跳过 draft 与 prerelease, 所以这里不能加 --prerelease
+          # 不带 --prerelease: 正式渠道走 /releases/latest, 会跳过 draft 与 prerelease,
+          # 预发布包应用内永远检测不到。
           gh release view "$VERSION" >/dev/null 2>&1 || \
             gh release create "$VERSION" \
               --title "legado $VERSION" \
-              --notes "legado $VERSION" \
+              --notes "legado $VERSION (${GITHUB_SHA:0:9})" \
               --latest
           gh release upload "$VERSION" "$asset" --clobber
 
