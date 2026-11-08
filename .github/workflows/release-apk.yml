@@ -20,8 +20,8 @@ on:
   workflow_dispatch:
     inputs:
       version:
-        description: '版本号 (不带 v), 例如 3.27.0101'
-        required: true
+        description: '版本号 (不带 v), 留空则按当前时间生成 3.yy.MMddHHmm'
+        required: false
 
 concurrency:
   group: release-${{ github.ref }}
@@ -47,6 +47,10 @@ jobs:
           set -euo pipefail
           if [ "${{ github.event_name }}" = "workflow_dispatch" ]; then
             raw="${{ inputs.version }}"
+            if [ -z "${raw:-}" ]; then
+              # 与本地构建同一套格式 (app/build.gradle.kts 的 releaseTime): 3.yy.MMddHHmm, GMT+8
+              raw="3.$(TZ=Asia/Shanghai date +%y.%m%d%H%M)"
+            fi
           else
             raw="${GITHUB_REF_NAME}"
           fi

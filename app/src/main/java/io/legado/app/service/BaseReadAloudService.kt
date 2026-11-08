@@ -303,18 +303,10 @@ abstract class BaseReadAloudService : BaseService() {
         }
         lifecycleScope.launch {
             readAloudController.state.collectLatest { state ->
-                AppLog.put("TtsDiag 控制器状态=$state pause=$pause", tag = "TtsDiag")
                 if (state == ReadAloudControllerShared.ReadAloudState.COMPLETED) stopSelf()
                 if (state == ReadAloudControllerShared.ReadAloudState.WAITING) {
                     chapterCoordinator.onWaiting()
                 }
-            }
-        }
-        // 临时诊断: 控制器置 ERROR 时只 emit 原因串, 安卓端此前没有任何订阅 (共享宿主有),
-        // 导致日志里只看得到 state=ERROR 看不到为什么 (定位完删除)
-        lifecycleScope.launch {
-            readAloudController.lastError.collect { message ->
-                AppLog.put("TtsDiag 朗读错误: $message", tag = "TtsDiag")
             }
         }
         sleepTimer = SleepTimer(
@@ -404,7 +396,6 @@ abstract class BaseReadAloudService : BaseService() {
     }
 
     private fun startReadAloud(play: Boolean, pageIndex: Int, startPos: Int) {
-        AppLog.put("TtsDiag startReadAloud play=$play page=$pageIndex <- ${diagCaller()}", tag = "TtsDiag")
         if (chapterWatchJob?.isActive != true) armChapterWatch()
         val chapter = readBook?.curTextChapter?.value
         val chapterIndex = chapter?.chapterIndex ?: readBook?.durChapterIndexValue ?: return
@@ -466,23 +457,9 @@ abstract class BaseReadAloudService : BaseService() {
                     position = position,
                     paragraphRange = ::currentParagraphRange,
                     onFollow = { follow ->
-                        AppLog.put(
-                            "TtsDiag 跟随位置 chapter=${follow.chapterIndex}" +
-                                " pos=${follow.chapterPosition} origin=${follow.origin}" +
-                                " 当前章=${readAloudController.chapterIndex.value}" +
-                                " 段区间=${currentParagraphRange()}",
-                            tag = "TtsDiag"
-                        )
                         readAloudController.seekTo(follow.chapterPosition, follow.chapterIndex)
                     },
                     onPauseMove = { moved ->
-                        AppLog.put(
-                            "TtsDiag 暂停位置移动 chapter=${moved.chapterIndex}" +
-                                " pos=${moved.chapterPosition} origin=${moved.origin}" +
-                                " 当前章=${readAloudController.chapterIndex.value}" +
-                                " 段区间=${currentParagraphRange()}",
-                            tag = "TtsDiag"
-                        )
                         requestedChapterPosition = moved.chapterPosition
                         pageChanged = true
                     },
@@ -512,7 +489,6 @@ abstract class BaseReadAloudService : BaseService() {
 
     @CallSuper
     open fun pauseReadAloud(abandonFocus: Boolean = true) {
-        AppLog.put("TtsDiag pauseReadAloud state=${readAloudController.state.value} <- ${diagCaller()}", tag = "TtsDiag")
         readAloudController.pause()
         playbackLock.release()
         pause = readAloudController.state.value != ReadAloudControllerShared.ReadAloudState.PLAYING
@@ -527,7 +503,6 @@ abstract class BaseReadAloudService : BaseService() {
 
     @CallSuper
     open fun resumeReadAloud() {
-        AppLog.put("TtsDiag resumeReadAloud pageChanged=$pageChanged state=${readAloudController.state.value} 请求位置=$requestedChapterPosition 段区间=${currentParagraphRange()} <- ${diagCaller()}", tag = "TtsDiag")
         val state = readAloudController.state.value
         if (pageChanged) {
             val chapterIndex = readBook?.durChapterIndexValue ?: return
@@ -568,14 +543,6 @@ abstract class BaseReadAloudService : BaseService() {
     private fun prevP() = readAloudController.prevParagraph()
 
     private fun nextP() = readAloudController.nextParagraph()
-
-    /** 临时诊断: 调用栈前几帧, 用于定位是谁改了朗读播放状态 (定位完删除)。 */
-    private fun diagCaller(): String = Throwable().stackTrace
-        .drop(2)
-        .take(4)
-        .joinToString(" <- ") {
-            "${it.className.substringAfterLast('.')}.${it.methodName}:${it.lineNumber}"
-        }
 
     /**
      * 请求音频焦点。失败时暂停并 toast。

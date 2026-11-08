@@ -53,6 +53,30 @@ jobs:
       - name: Set up Gradle
         uses: gradle/actions/setup-gradle@v5
 
+      # 可选签名: 配了 RELEASE_KEY_STORE 就用正式密钥签 debug 包。
+      # 正式包与 debug 包现在是同一个包名 (applicationIdSuffix 都是 .debug),
+      # 只有签名也一致, 两者才能互相覆盖安装而不必卸载 (卸载会丢书源与进度)。
+      # 没配 secret 的 fork 保持原状: 走 AGP 自动生成的 debug keystore, 构建照样能过。
+      - name: Inject signing config (optional)
+        env:
+          RS_FILE: ${{ secrets.RELEASE_KEY_STORE }}
+          RS_ALIAS: ${{ secrets.RELEASE_KEY_ALIAS }}
+          RS_KEY_PASS: ${{ secrets.RELEASE_KEY_PASSWORD }}
+          RS_STORE_PASS: ${{ secrets.RELEASE_STORE_PASSWORD }}
+        run: |
+          if [ -z "${RS_FILE:-}" ] || [ -z "${RS_ALIAS:-}" ]; then
+            echo "未配置签名 secret, 使用 debug keystore"
+            exit 0
+          fi
+          {
+            echo "RELEASE_KEY_ALIAS=$RS_ALIAS"
+            echo "RELEASE_KEY_PASSWORD=$RS_KEY_PASS"
+            echo "RELEASE_STORE_PASSWORD=$RS_STORE_PASS"
+            echo "RELEASE_STORE_FILE=./key.jks"
+          } >> gradle.properties
+          echo "$RS_FILE" | base64 -d > app/key.jks
+          echo "已注入正式签名密钥"
+
       - name: Build Debug
         id: build
         run: |

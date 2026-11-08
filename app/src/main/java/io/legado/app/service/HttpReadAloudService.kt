@@ -164,16 +164,12 @@ class HttpReadAloudService : BaseReadAloudService(),
     }
 
     override fun play() {
-        AppLog.put("TtsDiag play len=${currentPlaybackText.length} token=$currentPlaybackToken pause=$pause", tag = "TtsDiag")
         pageChanged = false
         // 换段/换章时先关掉上一段的字级上报: 否则它会带着旧段的偏移量继续上报,
         // 而控制器此时已经推进到新段起点, 合成出来的位置就落到别的段落 (高亮闪动)
         playIndexJob?.cancel()
         exoPlayer.stop()
-        if (!requestFocus()) {
-            AppLog.put("TtsDiag requestFocus 失败(未获取音频焦点)", tag = "TtsDiag")
-            return
-        }
+        if (!requestFocus()) return
         if (currentPlaybackText.isEmpty()) {
             AppLog.putDebug("朗读列表为空")
             readBook?.readAloud()
@@ -193,7 +189,6 @@ class HttpReadAloudService : BaseReadAloudService(),
     }
 
     private fun updateNextPos(token: Long) {
-        AppLog.put("TtsDiag 段末 token=$token", tag = "TtsDiag")
         readAloudController.paragraphCompleted(token)
     }
 
@@ -220,10 +215,7 @@ class HttpReadAloudService : BaseReadAloudService(),
                 withContext(Main) {
                     // 令牌校验: 下载期间用户可能已经换段/换章, 迟到的音频不能插进新队列
                     if (playbackToken == currentPlaybackToken) {
-                        AppLog.put("TtsDiag 加入媒体项 token=$playbackToken", tag = "TtsDiag")
                         addSpeakMediaItem(fileName, playbackToken)
-                    } else {
-                        AppLog.put("TtsDiag 令牌失配丢弃 token=$playbackToken 当前=$currentPlaybackToken", tag = "TtsDiag")
                     }
                 }
             }
@@ -523,10 +515,7 @@ class HttpReadAloudService : BaseReadAloudService(),
 
             Player.STATE_READY -> {
                 // 准备好
-                if (pause) {
-                    AppLog.put("TtsDiag READY 但 pause=true, 不续播", tag = "TtsDiag")
-                    return
-                }
+                if (pause) return
                 exoPlayer.play()
                 upPlayPos()
             }

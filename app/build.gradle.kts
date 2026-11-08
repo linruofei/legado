@@ -16,7 +16,9 @@ plugins {
 }
 
 fun releaseTime(): String {
-    val fmt = DateTimeFormatter.ofPattern("yy.MMddHH")
+    // 版本号第三段带小时+分钟 (原版只到小时): 同一天多次发版时小时相同, 版本号会撞车,
+    // 而更新检测只比 versionName, 撞车的版本不会被提示升级。
+    val fmt = DateTimeFormatter.ofPattern("yy.MMddHHmm")
         .withZone(ZoneId.of("GMT+8"))
     return fmt.format(Instant.now())
 }
@@ -125,7 +127,9 @@ android {
             vcsInfo {
                 include = false
             }
-            applicationIdSuffix = if (coexistBuild) ".releaseA" else ".release"
+            // 正式包与 debug 包同包名 (shutiao.reader.debug): 这样两者装在同一台机器上是"升级"
+            // 而不是并存两个应用, 数据/书源/进度共用一份。上架应用市场前必须改回独立包名。
+            applicationIdSuffix = if (coexistBuild) ".releaseA" else ".debug"
             manifestPlaceholders["app_name"] = "@string/app_name"
 
             isMinifyEnabled = true
