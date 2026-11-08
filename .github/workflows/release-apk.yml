@@ -95,7 +95,7 @@ jobs:
 
       - name: Build release
         run: >
-          ./gradlew assembleApprelease
+          ./gradlew assembleAppRelease
           -PappVersion=${{ steps.ver.outputs.version }}
           -PonlyAbi=arm64-v8a
           --build-cache --parallel --warning-mode all
