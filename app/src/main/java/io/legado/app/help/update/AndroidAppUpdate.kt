@@ -18,7 +18,16 @@ import io.legado.app.help.config.AppConfig
  */
 fun registerAndroidAppUpdate() {
     AppUpdateManager.register(AndroidUpdateEnvironment)
+    // 检查更新改查本 fork 的 Release: 上游 huajideshutiao/legado 的版本号跟着它的发版走,
+    // 自签渠道也判定不到 (isOfficial/isBeta 比的是上游证书哈希, 见 AppConstAndroid),
+    // 直接查上游只会提示"升级到别人的包"。
+    // 不改 GitHubReleaseChecker.DEFAULT_REPO —— 那个常量代表"legado 官方", 别的端还在用;
+    // 这里只在安卓端换绑检测器, 语义是"这台设备的更新源是本仓库"。
+    UpdateCheckers.register(UpdatePlatform.ANDROID, GitHubReleaseChecker(FORK_REPO))
 }
+
+/** 本 fork 的 GitHub 仓库 (owner/repo), 更新检测与发布工作流都用它。 */
+private const val FORK_REPO = "linruofei/legado"
 
 /** 安卓端运行时信息 (版本号/渠道/ABI 全走 [AppConst.appInfo])。 */
 private object AndroidUpdateEnvironment : AppUpdateEnvironment {
