@@ -1,26 +1,23 @@
 name: Debug APK
 
-# 唯一的 CI 工作流: 只构建 debug 变体并上传 artifact。
-# 不签名 (debug 变体走 AGP 自动生成的 debug keystore), 因此不需要任何 secret,
-# fork 或个人分支直接可用。
+# master 的编译护栏: 只构建 debug 变体并上传 artifact。
+# 配了签名 secret 时用正式密钥签 (与正式包同包名同签名, 可互相覆盖安装);
+# 没配则走 AGP 自动生成的 debug keystore, fork 直接可用。
 # 原 Test Build / Release Build / iOS / Web / Desktop 等流程已整体停用,
 # 文件移到 .github/workflows-disabled/, 恢复方式见该目录 README.md。
 
 on:
+  # 只当 master 的编译护栏: 每次提交跑一遍, 有问题当场发现, 不必等打 tag 才暴露。
+  # 不监听 pull_request (本仓库不走 PR 流程), 其它分支不自动构建。
   push:
     branches:
-      - '**'
+      - master
     paths-ignore:
       - '**.md'
       - '**/assets/**'
       - '**/ISSUE_TEMPLATE/**'
       - '**/modules/web/**'
-  pull_request:
-    paths-ignore:
-      - '**.md'
-      - '**/assets/**'
-      - '**/ISSUE_TEMPLATE/**'
-      - '**/modules/web/**'
+      - '.github/**'
   workflow_dispatch:
 
 concurrency:
